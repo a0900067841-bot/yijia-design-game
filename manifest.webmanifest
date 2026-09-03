@@ -1,9 +1,9 @@
 {
-  "name": "億家設計遊戲 v3",
+  "name": "億家設計遊戲 v4",
   "short_name": "億家設計",
   "start_url": "./",
   "display": "standalone",
-  "background_color": "#0f172a",
-  "theme_color": "#0f172a",
+  "background_color": "#111827",
+  "theme_color": "#111827",
   "orientation": "landscape"
 }
