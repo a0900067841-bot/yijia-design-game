@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#111827"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
-<title>億家設計遊戲 v4.2</title>
+<title>億家設計遊戲 v4.4</title>
 <link rel="manifest" href="./manifest.webmanifest"/>
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -45,7 +45,7 @@ body{touch-action:none;overscroll-behavior:none}
 <div id="crosshair"></div>
 
 <div class="top">
-  <div class="badge">億家設計遊戲 v4.2</div>
+  <div class="badge">億家設計遊戲 v4.4</div>
   <div id="modeBadge" class="badge">步行 / 範圍 / 地基</div>
 </div>
 
@@ -65,6 +65,9 @@ body{touch-action:none;overscroll-behavior:none}
   </div>
   <button id="flyBtn" class="action">飛行模式</button>
   <button id="rangeBtn" class="action active">範圍建造</button>
+  <button id="fourWallsBtn" class="action">四面牆</button>
+  <button id="fillBaseBtn" class="action">整片地基</button>
+  <button id="fillSlabBtn" class="action">整層樓板</button>
   <button id="placeBtn" class="action">設定起點</button>
   <button id="confirmBtn" class="action" style="display:none;background:rgba(22,163,74,.92)">確認建造</button>
   <button id="cancelBtn" class="action" style="display:none">取消範圍</button>
@@ -72,27 +75,37 @@ body{touch-action:none;overscroll-behavior:none}
 </div>
 
 <div class="hotbarWrap">
-  <div id="hotbar">
-    <button class="slot active" data-kind="foundation"><span class="icon">🧱</span>地基</button>
-    <button class="slot" data-kind="column"><span class="icon">🏗️</span>柱</button>
-    <button class="slot" data-kind="beam"><span class="icon">➖</span>樑</button>
-    <button class="slot" data-kind="slab"><span class="icon">⬜</span>樓板</button>
-    <button class="slot" data-kind="wall"><span class="icon">🧱</span>牆</button>
-    <button class="slot" data-kind="glass"><span class="icon">🪟</span>玻璃</button>
-    <button class="slot" data-kind="aluminum_glass"><span class="icon">🪟</span>鋁框玻璃</button>
-    <button class="slot" data-kind="door"><span class="icon">🚪</span>木門</button>
-    <button class="slot" data-kind="store_auto_door"><span class="icon">🚶</span>超商自動門</button>
-    <button class="slot" data-kind="building_glass_door"><span class="icon">🏢</span>大樓玻璃門</button>
-    <button class="slot" data-kind="stairs"><span class="icon">🪜</span>樓梯</button>
-    <button class="slot" data-kind="step"><span class="icon">🧱</span>階梯</button>
-    <button class="slot" data-kind="ramp"><span class="icon">📐</span>斜坡</button>
-    <button class="slot" data-kind="lightbox"><span class="icon">💡</span>燈板</button>
-    <button class="slot" data-kind="sign"><span class="icon">🏪</span>億家招牌</button>
-    <button class="slot" data-kind="shelf"><span class="icon">🗄️</span>貨架</button>
-    <button class="slot" data-kind="counter"><span class="icon">💳</span>收銀台</button>
-    <button class="slot" data-kind="fridge"><span class="icon">🧊</span>冰箱</button>
-    <button class="slot" data-kind="road"><span class="icon">🛣️</span>道路</button>
-    <button class="slot" data-kind="empty"><span class="icon">✋</span>空手</button>
+  <div id="hotbarMini">
+    <button id="togglePanel" class="action">建材選單</button>
+    <div id="currentItem">目前：地基</div>
+  </div>
+  <div id="itemPanel">
+    <div id="hotbar">
+      <button class="slot active" data-kind="foundation"><span class="icon">🧱</span>地基</button>
+      <button class="slot" data-kind="column"><span class="icon">🏗️</span>柱</button>
+      <button class="slot" data-kind="beam"><span class="icon">➖</span>樑</button>
+      <button class="slot" data-kind="slab"><span class="icon">⬜</span>樓板</button>
+      <button class="slot" data-kind="wall"><span class="icon">🧱</span>牆</button>
+      <button class="slot" data-kind="glass"><span class="icon">🪟</span>玻璃</button>
+      <button class="slot" data-kind="aluminum_glass"><span class="icon">🪟</span>鋁框玻璃</button>
+      <button class="slot" data-kind="door"><span class="icon">🚪</span>木門</button>
+      <button class="slot" data-kind="store_auto_door"><span class="icon">🚶</span>超商自動門</button>
+      <button class="slot" data-kind="building_glass_door"><span class="icon">🏢</span>大樓玻璃門</button>
+      <button class="slot" data-kind="stairs"><span class="icon">🪜</span>樓梯</button>
+      <button class="slot" data-kind="step"><span class="icon">🧱</span>階梯</button>
+      <button class="slot" data-kind="ramp"><span class="icon">📐</span>斜坡</button>
+      <button class="slot" data-kind="lightbox"><span class="icon">💡</span>燈板</button>
+      <button class="slot" data-kind="sign"><span class="icon">🏪</span>億家招牌</button>
+      <button class="slot" data-kind="shelf"><span class="icon">🗄️</span>貨架</button>
+      <button class="slot" data-kind="counter"><span class="icon">💳</span>收銀台</button>
+      <button class="slot" data-kind="fridge"><span class="icon">🧊</span>冰箱</button>
+      <button class="slot" data-kind="road"><span class="icon">🛣️</span>道路</button>
+      <button class="slot" data-kind="light"><span class="icon">💡</span>電燈</button>
+      <button class="slot" data-kind="parking"><span class="icon">🅿️</span>停車格</button>
+      <button class="slot" data-kind="arcade"><span class="icon">🏬</span>騎樓</button>
+      <button class="slot" data-kind="signpost"><span class="icon">📍</span>招牌柱</button>
+      <button class="slot" data-kind="empty"><span class="icon">✋</span>空手</button>
+    </div>
   </div>
 </div>
 </div>
@@ -114,10 +127,16 @@ const jumpBtn=document.getElementById("jumpBtn");
 const downBtn=document.getElementById("downBtn");
 const flyBtn=document.getElementById("flyBtn");
 const rangeBtn=document.getElementById("rangeBtn");
+const fourWallsBtn=document.getElementById("fourWallsBtn");
+const fillBaseBtn=document.getElementById("fillBaseBtn");
+const fillSlabBtn=document.getElementById("fillSlabBtn");
 const confirmBtn=document.getElementById("confirmBtn");
 const cancelBtn=document.getElementById("cancelBtn");
 const zoomInBtn=document.getElementById("zoomInBtn");
 const zoomOutBtn=document.getElementById("zoomOutBtn");
+const togglePanel=document.getElementById("togglePanel");
+const itemPanel=document.getElementById("itemPanel");
+const currentItem=document.getElementById("currentItem");
 const slots=[...document.querySelectorAll(".slot")];
 
 const renderer=new THREE.WebGLRenderer({canvas,antialias:true});
@@ -223,8 +242,18 @@ function slotLabel(kind){
   return {
     foundation:"地基",column:"柱",beam:"樑",slab:"樓板",wall:"牆",glass:"玻璃",aluminum_glass:"鋁框玻璃",
     door:"木門",store_auto_door:"超商自動門",building_glass_door:"大樓玻璃門",stairs:"樓梯",step:"階梯",
-    ramp:"斜坡",lightbox:"燈板",sign:"億家招牌",shelf:"貨架",counter:"收銀台",fridge:"冰箱",road:"道路",empty:"空手"
+    ramp:"斜坡",lightbox:"燈板",sign:"億家招牌",shelf:"貨架",counter:"收銀台",fridge:"冰箱",road:"道路",
+    light:"電燈",parking:"停車格",arcade:"騎樓",signpost:"招牌柱",empty:"空手"
   }[kind] || kind;
+}
+
+function setPanelOpen(open){
+  itemPanel.classList.toggle("open", !!open);
+  togglePanel.textContent = open ? "收合建材" : "建材選單";
+}
+
+function updateCurrentItem(){
+  currentItem.textContent = `目前：${slotLabel(selectedKind)}`;
 }
 
 function mat(color,opts={}){
@@ -400,6 +429,82 @@ function signGroup(){
   return g;
 }
 
+
+function ceilingLight(){
+  const g=new THREE.Group();
+  const frame=box(1.2,.12,.5,0xd8d8d8);
+  frame.position.y=2.75;
+  g.add(frame);
+  const glow=new THREE.Mesh(
+    new THREE.BoxGeometry(1.05,.05,.38),
+    new THREE.MeshStandardMaterial({color:0xfff4c6,emissive:0xffe89a,emissiveIntensity:1.8,roughness:.5})
+  );
+  glow.position.y=2.68;
+  g.add(glow);
+  return g;
+}
+
+function parkingGroup(){
+  const g=new THREE.Group();
+  const slab=box(2.6,.04,5,0x555a60);
+  slab.position.y=.02;
+  g.add(slab);
+  const lineMat=new THREE.MeshBasicMaterial({color:0xffffff});
+  for(const x of[-1.22,1.22]){
+    const line=new THREE.Mesh(new THREE.BoxGeometry(.05,.015,4.7),lineMat);
+    line.position.set(x,.045,0); g.add(line);
+  }
+  const stop=new THREE.Mesh(new THREE.BoxGeometry(2.4,.015,.06),lineMat);
+  stop.position.set(0,.045,-2.15); g.add(stop);
+  return g;
+}
+
+function arcadeGroup(){
+  const g=new THREE.Group();
+  const roof=box(3,.22,2.4,0xc7c7c7);
+  roof.position.set(0,3,0); g.add(roof);
+  for(const x of[-1.28,1.28]){
+    const p=box(.24,3,.24,0x9d9d9d);
+    p.position.set(x,1.5,-.9); g.add(p);
+  }
+  const floor=box(3,.12,2.4,0xbcbcbc);
+  floor.position.y=.06; g.add(floor);
+  return g;
+}
+
+function signPostGroup(){
+  const g=new THREE.Group();
+  const pole=box(.28,4,.28,0x777d83);
+  pole.position.y=2; g.add(pole);
+  const panel=box(2.2,1.1,.18,0xf4f1e8);
+  panel.position.set(0,4.15,0); g.add(panel);
+  const face=new THREE.Mesh(
+    new THREE.PlaneGeometry(2, .9),
+    new THREE.MeshBasicMaterial({map:makeSignFace()})
+  );
+  face.position.set(0,4.15,.11); g.add(face);
+  return g;
+}
+
+function autoDoorGroup(){
+  const g=glassWithFrame("store");
+  g.userData.autoDoor=true;
+  g.userData.openAmount=0;
+  g.userData.openTarget=0;
+  g.userData.leftDoor=null;
+  g.userData.rightDoor=null;
+
+  // Add two visible sliding glass panels over the existing framed glass.
+  const left=box(.78,2.25,.07,0x9bd3e6,{transparent:true,opacity:.5});
+  left.position.set(-.42,1.22,.07);
+  const right=box(.78,2.25,.07,0x9bd3e6,{transparent:true,opacity:.5});
+  right.position.set(.42,1.22,.07);
+  g.add(left); g.add(right);
+  g.userData.leftDoor=left;
+  g.userData.rightDoor=right;
+  return g;
+}
+
 function createObject(kind){
   let obj;
   if(kind==="foundation"){
@@ -425,7 +530,7 @@ function createObject(kind){
   }else if(kind==="door"){
     obj=woodenDoor();
   }else if(kind==="store_auto_door"){
-    obj=glassWithFrame("store");
+    obj=autoDoorGroup();
   }else if(kind==="building_glass_door"){
     obj=doubleGlassDoor();
   }else if(kind==="stairs"){
@@ -466,6 +571,14 @@ function createObject(kind){
   }else if(kind==="road"){
     obj=box(3,.08,2,0x44484d);
     obj.position.y=.04;
+  }else if(kind==="light"){
+    obj=ceilingLight();
+  }else if(kind==="parking"){
+    obj=parkingGroup();
+  }else if(kind==="arcade"){
+    obj=arcadeGroup();
+  }else if(kind==="signpost"){
+    obj=signPostGroup();
   }else if(kind==="empty"){
     obj=new THREE.Group();
   }
@@ -478,7 +591,7 @@ function defaultY(kind){
   return {
     foundation:.175,column:1.5,beam:2.75,slab:3.05,wall:1.35,glass:1.35,aluminum_glass:0,
     door:0,store_auto_door:0,building_glass_door:0,stairs:0,step:0,ramp:0,lightbox:0,sign:0,
-    shelf:0,counter:0,fridge:0,road:.04,empty:0
+    shelf:0,counter:0,fridge:0,road:.04,light:0,parking:0,arcade:0,signpost:0,empty:0
   }[kind] ?? 0;
 }
 
@@ -622,6 +735,37 @@ function rangeCells(a,b){
   return lineCells(a,b);
 }
 
+
+function rectangleCells(a,b){
+  const minX=Math.min(a.x,b.x), maxX=Math.max(a.x,b.x);
+  const minZ=Math.min(a.z,b.z), maxZ=Math.max(a.z,b.z);
+  const cells=[];
+  for(let x=minX;x<=maxX;x++){
+    cells.push({x,z:minZ,ry:0});
+    if(maxZ!==minZ) cells.push({x,z:maxZ,ry:0});
+  }
+  for(let z=minZ+1;z<=maxZ-1;z++){
+    cells.push({x:minX,z,ry:Math.PI/2});
+    if(maxX!==minX) cells.push({x:maxX,z,ry:Math.PI/2});
+  }
+  return cells;
+}
+
+function buildRectangle(kind,a,b){
+  const minX=Math.min(a.x,b.x), maxX=Math.max(a.x,b.x);
+  const minZ=Math.min(a.z,b.z), maxZ=Math.max(a.z,b.z);
+  if(kind==="wall"){
+    for(const c of rectangleCells(a,b)) addObject("wall",c.x,defaultY("wall"),c.z,c.ry,false);
+  }else{
+    for(let x=minX;x<=maxX;x++){
+      for(let z=minZ;z<=maxZ;z++){
+        addObject(kind,x,defaultY(kind),z,0,false);
+      }
+    }
+  }
+  saveWorld();
+}
+
 function drawRangePreview(){
   clearRangePreview();
   if(!rangeStart || !rangeEnd || selectedKind==="empty") return;
@@ -663,6 +807,8 @@ slots.forEach(btn=>btn.addEventListener("click",()=>{
   resetRangeUi();
   ensurePreview();
   updateModeBadge();
+  updateCurrentItem();
+  setPanelOpen(false);
 }));
 
 placeBtn.addEventListener("click",()=>{
@@ -688,6 +834,33 @@ placeBtn.addEventListener("click",()=>{
 
   const rot=Math.round(yaw/(Math.PI/2))*(Math.PI/2);
   addObject(selectedKind,pl.x,defaultY(selectedKind),pl.z,rot,true);
+});
+
+
+function requireRangeForQuickBuild(){
+  if(!rangeStart || !rangeEnd){
+    modeBadge.textContent="請先設定起點與終點";
+    return false;
+  }
+  return true;
+}
+
+fourWallsBtn.addEventListener("click",()=>{
+  if(!requireRangeForQuickBuild()) return;
+  buildRectangle("wall",rangeStart,rangeEnd);
+  resetRangeUi();
+});
+
+fillBaseBtn.addEventListener("click",()=>{
+  if(!requireRangeForQuickBuild()) return;
+  buildRectangle("foundation",rangeStart,rangeEnd);
+  resetRangeUi();
+});
+
+fillSlabBtn.addEventListener("click",()=>{
+  if(!requireRangeForQuickBuild()) return;
+  buildRectangle("slab",rangeStart,rangeEnd);
+  resetRangeUi();
 });
 
 rangeBtn.addEventListener("click",()=>{
@@ -804,8 +977,14 @@ canvas.addEventListener("pointercancel",e=>{ if(e.pointerId===lookPointer) lookP
 
 document.addEventListener("contextmenu",e=>e.preventDefault());
 
+togglePanel.addEventListener("click",()=>{
+  setPanelOpen(!itemPanel.classList.contains("open"));
+});
+
 ensurePreview();
 updateModeBadge();
+updateCurrentItem();
+setPanelOpen(false);
 
 let last=performance.now();
 function loop(now){
@@ -841,6 +1020,19 @@ function loop(now){
 
   updateCamera();
   updatePreview();
+
+  // Convenience-store automatic doors open when the player approaches.
+  for(const obj of objects){
+    if(obj.userData?.autoDoor && obj.userData.leftDoor && obj.userData.rightDoor){
+      const d=Math.hypot(pos.x-obj.position.x,pos.z-obj.position.z);
+      obj.userData.openTarget = d < 2.6 ? 1 : 0;
+      obj.userData.openAmount += (obj.userData.openTarget-obj.userData.openAmount) * Math.min(1,dt*6);
+      const a=obj.userData.openAmount;
+      obj.userData.leftDoor.position.x=-.42-.34*a;
+      obj.userData.rightDoor.position.x=.42+.34*a;
+    }
+  }
+
   renderer.render(scene,camera);
   requestAnimationFrame(loop);
 }
