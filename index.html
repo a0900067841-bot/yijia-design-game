@@ -1,1213 +1,156 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"/>
-<meta name="theme-color" content="#111827"/>
-<meta name="apple-mobile-web-app-capable" content="yes"/>
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
-<title>億家設計遊戲 v4.7</title>
-<link rel="manifest" href="./manifest.webmanifest"/>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>MB 1843AE 遊覽車模擬器 v0.6</title>
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{width:100%;height:100%;margin:0;overflow:hidden;background:#0f172a;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
-body{touch-action:none;overscroll-behavior:none}
-#app{position:fixed;inset:0;overflow:hidden}
-#scene{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
-#crosshair{position:absolute;left:50%;top:50%;width:24px;height:24px;transform:translate(-50%,-50%);pointer-events:none}
-#crosshair:before,#crosshair:after{content:"";position:absolute;background:#fff;box-shadow:0 0 4px #000}
-#crosshair:before{left:11px;top:2px;width:2px;height:20px}
-#crosshair:after{left:2px;top:11px;width:20px;height:2px}
-.top{position:absolute;top:max(10px,env(safe-area-inset-top));left:10px;right:10px;display:flex;justify-content:space-between;gap:8px;pointer-events:none}
-.badge{padding:8px 11px;border-radius:12px;background:rgba(15,23,42,.76);color:#fff;font-size:13px;backdrop-filter:blur(10px)}
-#modeBadge{pointer-events:none}
-#joystick{position:absolute;left:18px;bottom:calc(124px + env(safe-area-inset-bottom));width:118px;height:118px;border-radius:50%;background:rgba(255,255,255,.11);border:1px solid rgba(255,255,255,.28);touch-action:none}
-#stick{position:absolute;left:36px;top:36px;width:46px;height:46px;border-radius:50%;background:rgba(255,255,255,.56);box-shadow:0 3px 12px rgba(0,0,0,.28)}
-.actions{
-  position:absolute;
-  right:6px;
-  bottom:calc(86px + env(safe-area-inset-bottom));
-  display:flex;
-  flex-direction:column;
-  gap:5px;
-  align-items:flex-end;
-  max-width:176px
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#000;color:#fff;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;touch-action:none}
+canvas{position:fixed;inset:0;width:100%;height:100%;display:block;background:#8dc6ea}
+.hud{position:fixed;top:max(8px,env(safe-area-inset-top));z-index:5;background:#0009;border:1px solid #ffffff33;border-radius:12px;padding:7px 10px;font-size:12px;line-height:1.35;backdrop-filter:blur(5px)}
+#leftHud{left:max(8px,env(safe-area-inset-left))}
+#rightHud{right:max(8px,env(safe-area-inset-right));text-align:right}
+#hint{position:fixed;top:10px;left:50%;transform:translateX(-50%);z-index:6;background:#0009;border-radius:999px;padding:6px 11px;font-size:11px}
+#joy{position:fixed;left:18px;bottom:18px;width:124px;height:124px;border-radius:50%;background:#0005;border:2px solid #ffffff55;z-index:10;touch-action:none}
+#knob{position:absolute;left:34px;top:34px;width:52px;height:52px;border-radius:50%;background:#fffddd;border:2px solid #fff}
+#actions{position:fixed;right:14px;top:38%;transform:translateY(-50%);z-index:10;display:flex;flex-direction:column;gap:7px}
+button{border:1px solid #ffffff44;background:#000a;color:#fff;border-radius:12px;min-height:40px;padding:7px 10px;font-size:12px}
+.primary{background:#e0bd00e8;color:#111;font-weight:700}
+#drive{position:fixed;right:12px;bottom:12px;z-index:10;display:flex;align-items:flex-end;gap:8px}
+.pedal{width:64px;height:92px;font-weight:700}.gas{background:#d8ba00e8;color:#111}.brk{background:#8b2525e8}
+.steer{width:52px;height:52px;border-radius:50%;font-size:20px}.steerbox{display:flex;gap:7px;margin-bottom:10px}
+#gears{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:10;display:flex;gap:6px}
+.gear{height:40px;min-width:54px}
+#rotate{display:none}
+@media (orientation:portrait) and (max-width:900px){
+#rotate{position:fixed;inset:0;background:#080808f2;z-index:999;display:flex;align-items:center;justify-content:center;text-align:center}
+#rotate .card{background:#1c1c1c;border:1px solid #ffffff22;border-radius:20px;padding:26px}
 }
-.action{
-  min-width:56px;
-  height:36px;
-  border:0;
-  border-radius:11px;
-  background:rgba(15,23,42,.88);
-  color:#fff;
-  font-size:11px;
-  font-weight:700;
-  padding:0 7px;
-  backdrop-filter:blur(10px);
-  box-shadow:0 4px 12px rgba(0,0,0,.2)
-}
-.action:active{transform:scale(.97)}
-.action.active{background:rgba(37,99,235,.94)}
-.smallRow{display:flex;gap:4px;justify-content:flex-end}
-.circle{
-  min-width:38px;
-  width:38px;
-  height:38px;
-  border-radius:50%;
-  padding:0;
-  font-size:10px
-}
-#mainActionGrid{
-  display:grid;
-  grid-template-columns:repeat(2,1fr);
-  gap:4px;
-  width:150px
-}
-#mainActionGrid .action{
-  width:100%;
-  min-width:0;
-  height:36px
-}
-#toolPanel{
-  display:none;
-  width:166px;
-  max-height:42vh;
-  overflow:auto;
-  padding:6px;
-  border-radius:13px;
-  background:rgba(15,23,42,.92);
-  backdrop-filter:blur(12px);
-  box-shadow:0 8px 22px rgba(0,0,0,.28)
-}
-#toolPanel.open{
-  display:grid;
-  grid-template-columns:repeat(2,1fr);
-  gap:4px
-}
-#toolPanel .action{
-  width:100%;
-  min-width:0;
-  height:36px;
-  font-size:10px;
-  padding:0 4px
-}
-#placeBtn.rangeActive{
-  grid-column:1 / -1;
-  background:rgba(37,99,235,.98)
-}
-#confirmBtn{grid-column:1 / -1}
-.hotbarWrap{
-  position:absolute;
-  left:6px;
-  right:6px;
-  bottom:0;
-  padding:5px 6px calc(5px + env(safe-area-inset-bottom));
-  background:linear-gradient(to top,rgba(15,23,42,.96),rgba(15,23,42,.48),transparent);
-  display:flex;
-  gap:5px;
-  align-items:center
-}
-#togglePanel{
-  min-width:82px;
-  height:36px;
-  font-size:11px
-}
-#currentItem{
-  flex:1;
-  min-width:0;
-  max-width:230px;
-  height:36px;
-  display:flex;
-  align-items:center;
-  padding:0 9px;
-  border-radius:11px;
-  background:rgba(15,23,42,.82);
-  color:#fff;
-  font-size:11px;
-  font-weight:700;
-  overflow:hidden;
-  text-overflow:ellipsis;
-  white-space:nowrap
-}
-#itemPanel{
-  display:none;
-  position:absolute;
-  left:8%;
-  right:8%;
-  bottom:calc(54px + env(safe-area-inset-bottom));
-  max-height:40vh;
-  overflow:auto;
-  padding:7px;
-  border-radius:15px;
-  background:rgba(15,23,42,.95);
-  backdrop-filter:blur(14px);
-  box-shadow:0 10px 28px rgba(0,0,0,.34);
-  z-index:20
-}
-#itemPanel.open{display:block}
-#hotbar{
-  display:grid;
-  grid-template-columns:repeat(5,minmax(0,1fr));
-  gap:5px
-}
-.slot{
-  width:100%;
-  min-width:0;
-  height:58px;
-  border:2px solid rgba(255,255,255,.22);
-  border-radius:11px;
-  background:rgba(20,29,48,.92);
-  color:#fff;
-  padding:3px;
-  font-size:10px
-}
-.slot .icon{display:block;font-size:20px;line-height:22px}
-.slot.active{border-color:#fff;background:rgba(37,99,235,.94)}
-@media(max-width:850px){
-  #hotbar{grid-template-columns:repeat(4,minmax(0,1fr))}
-  #toolPanel{width:158px}
-  #mainActionGrid{width:144px}
-}
-#save{position:absolute;right:14px;top:calc(max(10px,env(safe-area-inset-top)) + 48px);padding:7px 10px;border-radius:10px;background:rgba(15,23,42,.74);color:white;font-size:12px;display:none}
-#help{position:absolute;left:50%;top:calc(max(10px,env(safe-area-inset-top)) + 48px);transform:translateX(-50%);padding:7px 10px;border-radius:10px;background:rgba(15,23,42,.74);color:white;font-size:12px;white-space:nowrap;pointer-events:none}
 </style>
 </head>
 <body>
-<div id="app">
-<canvas id="scene"></canvas>
-<div id="crosshair"></div>
+<canvas id="game"></canvas>
+<div class="hud" id="leftHud"><b id="mode">步行模式</b><br><span id="status">用左下搖桿移動</span></div>
+<div class="hud" id="rightHud"><b id="speed">0 km/h</b><br><span id="gearText">N・手煞車 ON</span><br><span id="engineText">引擎 OFF</span></div>
+<div id="hint">左下搖桿走動・拖動畫面轉視角</div>
 
-<div class="top">
-  <div class="badge">億家設計遊戲 v4.7</div>
-  <div id="modeBadge" class="badge">步行 / 範圍 / 地基</div>
+<div id="joy"><div id="knob"></div></div>
+
+<div id="actions">
+<button id="door" class="primary">開／關前門</button>
+<button id="seat">坐駕駛座</button>
+<button id="engineBtn">啟動引擎</button>
+<button id="parkBtn">氣壓手煞車</button>
+<button id="exitBtn">離開駕駛座</button>
 </div>
 
-<div id="save">已儲存</div>
-<div id="help">左邊移動・右半畫面滑動・可用近/遠縮放</div>
+<div id="gears"><button id="gearDown" class="gear">檔位 −</button><button id="gearUp" class="gear">檔位 ＋</button></div>
 
-<div id="joystick"><div id="stick"></div></div>
-
-<div class="actions">
-  <div class="smallRow">
-    <button id="zoomOutBtn" class="action circle">遠</button>
-    <button id="zoomInBtn" class="action circle">近</button>
-    <button id="downBtn" class="action circle">降</button>
-    <button id="jumpBtn" class="action circle">升</button>
-  </div>
-
-  <div id="mainActionGrid">
-    <button id="flyBtn" class="action">飛行</button>
-    <button id="toggleToolsBtn" class="action">施工工具</button>
-  </div>
-
-  <div id="toolPanel">
-    <button id="rangeBtn" class="action active">範圍</button>
-    <button id="removeBtn" class="action">拆除</button>
-    <button id="fourWallsBtn" class="action">四面牆</button>
-    <button id="fillBaseBtn" class="action">整片地基</button>
-    <button id="fillSlabBtn" class="action">整層樓板</button>
-    <button id="cancelBtn" class="action" style="display:none">取消</button>
-    <button id="placeBtn" class="action rangeActive">設定起點</button>
-    <button id="confirmBtn" class="action" style="display:none;background:rgba(22,163,74,.92)">確認建造</button>
-  </div>
+<div id="drive">
+<div class="steerbox"><button id="steerL" class="steer">◀</button><button id="steerR" class="steer">▶</button></div>
+<button id="brake" class="pedal brk">煞車</button>
+<button id="gas" class="pedal gas">油門</button>
 </div>
 
-<div class="hotbarWrap">
-  <button id="togglePanel" class="action">建材選單</button>
-  <div id="currentItem">目前：地基</div>
-</div>
-<div id="itemPanel">
-    <div id="hotbar">
-      <button class="slot active" data-kind="foundation"><span class="icon">🧱</span>地基</button>
-      <button class="slot" data-kind="column"><span class="icon">🏗️</span>柱</button>
-      <button class="slot" data-kind="beam"><span class="icon">➖</span>樑</button>
-      <button class="slot" data-kind="slab"><span class="icon">⬜</span>樓板</button>
-      <button class="slot" data-kind="wall"><span class="icon">🧱</span>牆</button>
-      <button class="slot" data-kind="glass"><span class="icon">🪟</span>玻璃</button>
-      <button class="slot" data-kind="aluminum_glass"><span class="icon">🪟</span>鋁框玻璃</button>
-      <button class="slot" data-kind="door"><span class="icon">🚪</span>木門</button>
-      <button class="slot" data-kind="store_auto_door"><span class="icon">🚶</span>超商自動門</button>
-      <button class="slot" data-kind="building_glass_door"><span class="icon">🏢</span>大樓玻璃門</button>
-      <button class="slot" data-kind="stairs"><span class="icon">🪜</span>樓梯</button>
-      <button class="slot" data-kind="step"><span class="icon">🧱</span>階梯</button>
-      <button class="slot" data-kind="ramp"><span class="icon">📐</span>斜坡</button>
-      <button class="slot" data-kind="lightbox"><span class="icon">💡</span>燈板</button>
-      <button class="slot" data-kind="sign"><span class="icon">🏪</span>億家招牌</button>
-      <button class="slot" data-kind="shelf"><span class="icon">🗄️</span>貨架</button>
-      <button class="slot" data-kind="counter"><span class="icon">💳</span>收銀台</button>
-      <button class="slot" data-kind="fridge"><span class="icon">🧊</span>冰箱</button>
-      <button class="slot" data-kind="road"><span class="icon">🛣️</span>道路</button>
-      <button class="slot" data-kind="light"><span class="icon">💡</span>電燈</button>
-      <button class="slot" data-kind="parking"><span class="icon">🅿️</span>停車格</button>
-      <button class="slot" data-kind="arcade"><span class="icon">🏬</span>騎樓</button>
-      <button class="slot" data-kind="signpost"><span class="icon">📍</span>招牌柱</button>
-      <button class="slot" data-kind="empty"><span class="icon">✋</span>空手</button>
-    </div>
-  </div>
-</div>
-</div>
+<div id="rotate"><div class="card"><div style="font-size:48px">↻</div><b style="font-size:21px">請把手機橫向</b><div style="margin-top:8px;color:#bbb;font-size:13px">橫向後才會顯示遊戲</div></div></div>
 
-<script type="module">
-import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.179.1/build/three.module.js";
+<script>
+(()=>{
+const c=document.getElementById('game'),ctx=c.getContext('2d'),$=id=>document.getElementById(id);
+let W=innerWidth,H=innerHeight,D=Math.min(2,devicePixelRatio||1);
+function resize(){W=innerWidth;H=innerHeight;D=Math.min(2,devicePixelRatio||1);c.width=W*D;c.height=H*D;c.style.width=W+'px';c.style.height=H+'px';ctx.setTransform(D,0,0,D,0,0)}addEventListener('resize',resize);resize();
 
-const SAVE_KEY="yijiaV42World";
-const LEGACY_KEYS=["yijiaV42World","yijiaV4World"];
+const s={seated:false,door:false,engine:false,park:true,gear:0,speed:0,
+px:0,pz:8,yaw:0,jx:0,jy:0,gas:false,brake:false,sl:false,sr:false,last:performance.now(),worldX:0};
+const gears=['N','1','2','3','4','5','6','7','8'];
+let ac=null,osc=null,gain=null;
 
-const canvas=document.getElementById("scene");
-const modeBadge=document.getElementById("modeBadge");
-const saveEl=document.getElementById("save");
-const joystick=document.getElementById("joystick");
-const stick=document.getElementById("stick");
-const placeBtn=document.getElementById("placeBtn");
-const removeBtn=document.getElementById("removeBtn");
-const jumpBtn=document.getElementById("jumpBtn");
-const downBtn=document.getElementById("downBtn");
-const flyBtn=document.getElementById("flyBtn");
-const rangeBtn=document.getElementById("rangeBtn");
-const fourWallsBtn=document.getElementById("fourWallsBtn");
-const fillBaseBtn=document.getElementById("fillBaseBtn");
-const fillSlabBtn=document.getElementById("fillSlabBtn");
-const confirmBtn=document.getElementById("confirmBtn");
-const cancelBtn=document.getElementById("cancelBtn");
-const zoomInBtn=document.getElementById("zoomInBtn");
-const zoomOutBtn=document.getElementById("zoomOutBtn");
-const togglePanel=document.getElementById("togglePanel");
-const toggleToolsBtn=document.getElementById("toggleToolsBtn");
-const toolPanel=document.getElementById("toolPanel");
-const itemPanel=document.getElementById("itemPanel");
-const currentItem=document.getElementById("currentItem");
-const slots=[...document.querySelectorAll(".slot")];
+function au(){if(!ac)ac=new (window.AudioContext||window.webkitAudioContext)();if(ac.state==='suspended')ac.resume();return ac}
+function hiss(){const a=au(),b=a.createBuffer(1,a.sampleRate*.4,a.sampleRate),d=b.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;const src=a.createBufferSource(),f=a.createBiquadFilter(),v=a.createGain();src.buffer=b;f.type='highpass';f.frequency.value=900;v.gain.value=.08;src.connect(f).connect(v).connect(a.destination);src.start();v.gain.exponentialRampToValueAtTime(.0001,a.currentTime+.4);src.stop(a.currentTime+.4)}
+function startSound(){const a=au(),o=a.createOscillator(),v=a.createGain();o.type='sawtooth';o.frequency.setValueAtTime(65,a.currentTime);o.frequency.linearRampToValueAtTime(92,a.currentTime+.7);v.gain.value=.12;o.connect(v).connect(a.destination);o.start();v.gain.exponentialRampToValueAtTime(.0001,a.currentTime+.8);o.stop(a.currentTime+.8)}
+function engOn(){if(osc)return;const a=au();osc=a.createOscillator();gain=a.createGain();osc.type='sawtooth';osc.frequency.value=29;gain.gain.value=.045;osc.connect(gain).connect(a.destination);osc.start()}
+function engOff(){if(!osc)return;try{osc.stop()}catch(e){}osc=null;gain=null}
 
-const renderer=new THREE.WebGLRenderer({canvas,antialias:true});
-renderer.setPixelRatio(Math.min(devicePixelRatio||1,2));
-renderer.shadowMap.enabled=true;
-renderer.outputColorSpace=THREE.SRGBColorSpace;
-
-const scene=new THREE.Scene();
-scene.background=new THREE.Color(0xa6cae6);
-scene.fog=new THREE.Fog(0xa6cae6,55,145);
-
-const camera=new THREE.PerspectiveCamera(72,1,.1,240);
-let targetFov=72;
-
-scene.add(new THREE.HemisphereLight(0xffffff,0x59614e,2.35));
-const sun=new THREE.DirectionalLight(0xffffff,2.7);
-sun.position.set(28,42,18);
-sun.castShadow=true;
-sun.shadow.mapSize.width=1024;
-sun.shadow.mapSize.height=1024;
-scene.add(sun);
-
-const ground=new THREE.Mesh(
-  new THREE.PlaneGeometry(220,220),
-  new THREE.MeshStandardMaterial({color:0x95a481,roughness:1})
-);
-ground.rotation.x=-Math.PI/2;
-ground.receiveShadow=true;
-ground.userData.isGround=true;
-scene.add(ground);
-
-const worksite=new THREE.Mesh(
-  new THREE.PlaneGeometry(32,24),
-  new THREE.MeshStandardMaterial({color:0xbea47e,roughness:1})
-);
-worksite.rotation.x=-Math.PI/2;
-worksite.position.set(0,.015,0);
-worksite.receiveShadow=true;
-scene.add(worksite);
-
-const roadDemo=new THREE.Mesh(
-  new THREE.PlaneGeometry(18,6),
-  new THREE.MeshStandardMaterial({color:0xb4b4b4,roughness:.95})
-);
-roadDemo.rotation.x=-Math.PI/2;
-roadDemo.position.set(0,.02,10);
-roadDemo.receiveShadow=true;
-scene.add(roadDemo);
-
-const grid=new THREE.GridHelper(220,220,0x5e6856,0x7d8874);
-grid.position.y=.02;
-scene.add(grid);
-
-const world=new THREE.Group();
-scene.add(world);
-
-const raycaster=new THREE.Raycaster();
-const center=new THREE.Vector2(0,0);
-
-const PLAYER_HEIGHT=1.72;
-const EYE_HEIGHT=1.62;
-const MOVE_SPEED=5.8;
-const FLY_SPEED=6.8;
-const GRAVITY=17;
-const JUMP_SPEED=6.8;
-
-let pos=new THREE.Vector3(0,PLAYER_HEIGHT,11);
-let yaw=Math.PI;
-let pitch=-0.06;
-let velocityY=0;
-let onGround=true;
-let flying=false;
-let moveX=0,moveY=0;
-let targetMoveX=0,targetMoveY=0;
-let verticalInput=0;
-let selectedKind="foundation";
-let preview=null;
-let rangeMode=true;
-let rangeStart=null;
-let rangeEnd=null;
-let rangePreviewGroup=null;
-let lookPointer=null;
-let lookLastX=0,lookLastY=0;
-let joystickPointer=null;
-let saveTimer=null;
-const objects=[];
-
-function resize(){
-  renderer.setSize(innerWidth,innerHeight,false);
-  camera.aspect=innerWidth/innerHeight;
-  camera.updateProjectionMatrix();
-}
-addEventListener("resize",resize);
-resize();
-
-function updateModeBadge(){
-  const mode1=flying?"飛行":"步行";
-  const mode2=rangeMode?"範圍":"單點";
-  const mode3=selectedKind==="empty"?"空手":slotLabel(selectedKind);
-  modeBadge.textContent=`${mode1} / ${mode2} / ${mode3}`;
-}
-function slotLabel(kind){
-  return {
-    foundation:"地基",column:"柱",beam:"樑",slab:"樓板",wall:"牆",glass:"玻璃",aluminum_glass:"鋁框玻璃",
-    door:"木門",store_auto_door:"超商自動門",building_glass_door:"大樓玻璃門",stairs:"樓梯",step:"階梯",
-    ramp:"斜坡",lightbox:"燈板",sign:"億家招牌",shelf:"貨架",counter:"收銀台",fridge:"冰箱",road:"道路",
-    light:"電燈",parking:"停車格",arcade:"騎樓",signpost:"招牌柱",empty:"空手"
-  }[kind] || kind;
+function ui(){
+$('mode').textContent=s.seated?'駕駛模式':'步行模式';
+$('status').textContent=s.seated?(s.engine?'可以開車':'請先啟動引擎'):(s.door?'前門已開，可按坐駕駛座':'用左下搖桿移動');
+$('speed').textContent=Math.round(s.speed)+' km/h';
+$('gearText').textContent=gears[s.gear]+'・手煞車 '+(s.park?'ON':'OFF');
+$('engineText').textContent='引擎 '+(s.engine?'ON':'OFF');
+$('seat').style.display=s.seated?'none':'block';
+$('engineBtn').style.display=s.seated?'block':'none';
+$('parkBtn').style.display=s.seated?'block':'none';
+$('exitBtn').style.display=s.seated?'block':'none';
+$('gears').style.display=s.seated?'flex':'none';
+$('drive').style.opacity=s.seated?'1':'.25';
+$('drive').style.pointerEvents=s.seated?'auto':'none';
+$('joy').style.opacity=s.seated?'.25':'1';
+$('joy').style.pointerEvents=s.seated?'none':'auto';
 }
 
-function setPanelOpen(open){
-  itemPanel.classList.toggle("open", !!open);
-  togglePanel.textContent = open ? "收合建材" : "建材選單";
+function rr(x,y,w,h,r,color){ctx.beginPath();ctx.roundRect(x,y,w,h,r);ctx.fillStyle=color;ctx.fill()}
+function drawWalk(){
+let sky=ctx.createLinearGradient(0,0,0,H*.65);sky.addColorStop(0,'#8ec8ed');sky.addColorStop(1,'#edf7fb');ctx.fillStyle=sky;ctx.fillRect(0,0,W,H*.65);
+ctx.fillStyle='#73925c';ctx.fillRect(0,H*.65,W,H*.35);
+ctx.fillStyle='#474a4e';ctx.beginPath();ctx.moveTo(0,H);ctx.lineTo(W*.18,H*.65);ctx.lineTo(W*.82,H*.65);ctx.lineTo(W,H);ctx.fill();
+
+const scale=Math.max(.65,Math.min(1.25,1.05-s.pz*.035));
+const bw=Math.min(W*.68,760)*scale,bh=bw*.34;
+const bx=W*.5-bw*.5 - s.px*45;
+const by=H*.34 + s.pz*22;
+rr(bx,by,bw,bh,22,'#e3c600');
+rr(bx+bw*.06,by+bh*.10,bw*.84,bh*.36,10,'#10171c');
+for(let i=0;i<7;i++){ctx.fillStyle='#233640';ctx.fillRect(bx+bw*(.085+i*.105),by+bh*.135,bw*.085,bh*.25)}
+ctx.fillStyle='#111';for(const wx of [bx+bw*.19,bx+bw*.76]){ctx.beginPath();ctx.arc(wx,by+bh,bh*.17,0,Math.PI*2);ctx.fill()}
+ctx.save();ctx.translate(bx+bw*.90,by+bh*.48);ctx.rotate(s.door?-.75:0);ctx.fillStyle='#d8bd00';ctx.fillRect(0,0,bw*.075,bh*.46);ctx.fillStyle='#263a44';ctx.fillRect(bw*.01,bh*.04,bw*.052,bh*.22);ctx.restore();
+ctx.fillStyle='#fff9';ctx.font='18px sans-serif';ctx.textAlign='center';ctx.fillText('＋',W/2,H/2);
 }
-
-function setToolPanelOpen(open){
-  toolPanel.classList.toggle("open", !!open);
-  toggleToolsBtn.textContent=open ? "收合工具" : "施工工具";
+function drawDrive(){
+let sky=ctx.createLinearGradient(0,0,0,H*.62);sky.addColorStop(0,'#8ec8ed');sky.addColorStop(1,'#eef8fb');ctx.fillStyle=sky;ctx.fillRect(0,0,W,H*.64);
+ctx.fillStyle='#4d5054';ctx.beginPath();ctx.moveTo(0,H*.64);ctx.lineTo(W*.38,H*.46);ctx.lineTo(W*.62,H*.46);ctx.lineTo(W,H*.64);ctx.fill();
+rr(W*.05,H*.61,W*.90,H*.34,22,'#2d3236');rr(W*.38,H*.67,W*.25,H*.15,12,'#101316');
+ctx.fillStyle='#dce9df';ctx.textAlign='center';ctx.font='700 22px monospace';ctx.fillText(Math.round(s.speed)+' km/h',W*.505,H*.735);ctx.font='15px monospace';ctx.fillText('GO240-8 '+gears[s.gear],W*.505,H*.785);
+ctx.strokeStyle='#111';ctx.lineWidth=18;ctx.beginPath();ctx.arc(W*.30,H*.79,Math.min(W,H)*.10,0,Math.PI*2);ctx.stroke();
 }
+function draw(){ctx.clearRect(0,0,W,H);s.seated?drawDrive():drawWalk()}
 
-function updateCurrentItem(){
-  currentItem.textContent = `目前：${slotLabel(selectedKind)}`;
+const joy=$('joy'),knob=$('knob');let jp=null;
+function joyMove(e){const r=joy.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2;let dx=e.clientX-cx,dy=e.clientY-cy,max=r.width*.31,len=Math.hypot(dx,dy)||1;if(len>max){dx*=max/len;dy*=max/len}s.jx=dx/max;s.jy=dy/max;knob.style.transform=`translate(${dx}px,${dy}px)`}
+joy.addEventListener('pointerdown',e=>{e.preventDefault();jp=e.pointerId;joy.setPointerCapture(jp);joyMove(e)});
+joy.addEventListener('pointermove',e=>{if(e.pointerId===jp)joyMove(e)});
+function joyEnd(e){if(e.pointerId!==jp)return;jp=null;s.jx=s.jy=0;knob.style.transform='translate(0,0)'}
+joy.addEventListener('pointerup',joyEnd);joy.addEventListener('pointercancel',joyEnd);
+
+function hold(id,key){const el=$(id);el.addEventListener('pointerdown',e=>{e.preventDefault();el.setPointerCapture(e.pointerId);s[key]=true});const off=e=>{s[key]=false};el.addEventListener('pointerup',off);el.addEventListener('pointercancel',off)}
+hold('gas','gas');hold('brake','brake');hold('steerL','sl');hold('steerR','sr');
+
+$('door').onclick=()=>{au();s.door=!s.door;hiss();ui()};
+$('seat').onclick=()=>{if(!s.door){$('hint').textContent='先開前門';return}s.seated=true;$('hint').textContent='放手煞車、進檔、踩油門';ui()};
+$('exitBtn').onclick=()=>{s.seated=false;s.speed=0;$('hint').textContent='左下搖桿走動・拖動畫面轉視角';ui()};
+$('engineBtn').onclick=()=>{if(!s.seated)return;au();if(!s.engine){startSound();$('hint').textContent='啟動中…';setTimeout(()=>{s.engine=true;engOn();$('hint').textContent='放手煞車、進檔、踩油門';ui()},800)}else{s.engine=false;s.speed=0;engOff();ui()}};
+$('parkBtn').onclick=()=>{s.park=!s.park;hiss();ui()};
+$('gearUp').onclick=()=>{s.gear=Math.min(8,s.gear+1);ui()};
+$('gearDown').onclick=()=>{s.gear=Math.max(0,s.gear-1);ui()};
+
+function update(dt){
+if(!s.seated){
+  // IMPORTANT: move the camera/world, not a tiny player dot.
+  s.px += s.jx*3.3*dt;
+  s.pz += s.jy*3.3*dt;
+  s.px=Math.max(-8,Math.min(8,s.px));
+  s.pz=Math.max(-4,Math.min(12,s.pz));
+}else{
+  const target=s.sl?-.7:s.sr?.7:0;s.steer+=(target-s.steer)*Math.min(1,dt*6);
+  if(s.engine&&!s.park&&s.gear>0&&s.gas)s.speed+=14*dt*(1-(s.gear-1)*.055);
+  if(s.brake)s.speed-=38*dt;if(s.park)s.speed-=52*dt;if(!s.gas)s.speed-=2.7*dt;
+  s.speed=Math.max(0,Math.min(120,s.speed));
+  if(osc&&ac){osc.frequency.setTargetAtTime(29+s.speed*.42+(s.gas?18:0),ac.currentTime,.08);gain.gain.setTargetAtTime(.04+s.speed*.0003+(s.gas?.028:0),ac.currentTime,.08)}
 }
-
-function mat(color,opts={}){
-  return new THREE.MeshStandardMaterial({color,roughness:.8,metalness:0,...opts});
 }
-
-function flashSave(){
-  saveEl.style.display="block";
-  clearTimeout(saveTimer);
-  saveTimer=setTimeout(()=>saveEl.style.display="none",650);
-}
-
-function saveWorld(){
-  const data=objects.map(o=>({
-    kind:o.userData.kind,
-    x:o.position.x,y:o.position.y,z:o.position.z,
-    ry:o.rotation.y
-  }));
-  localStorage.setItem(SAVE_KEY,JSON.stringify(data));
-  flashSave();
-}
-
-function box(w,h,d,color,opts={}){
-  const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat(color,opts));
-  m.castShadow=true;m.receiveShadow=true;
-  return m;
-}
-
-function makeTextTexture(text, bg="#f6f3ea", fg="#123", accent=null){
-  const c=document.createElement("canvas");
-  c.width=512;c.height=128;
-  const ctx=c.getContext("2d");
-  ctx.fillStyle=bg;
-  ctx.fillRect(0,0,c.width,c.height);
-  if(accent){
-    ctx.fillStyle=accent;
-    ctx.fillRect(0,0,c.width,18);
-  }
-  ctx.fillStyle=fg;
-  ctx.font="bold 60px sans-serif";
-  ctx.textAlign="center";
-  ctx.textBaseline="middle";
-  ctx.fillText(text,c.width/2,c.height/2+4);
-  const tx=new THREE.CanvasTexture(c);
-  tx.colorSpace=THREE.SRGBColorSpace;
-  return tx;
-}
-
-function makeSignFace(){
-  const c=document.createElement("canvas");
-  c.width=1024;c.height=256;
-  const ctx=c.getContext("2d");
-  ctx.fillStyle="#f7f4ea";
-  ctx.fillRect(0,0,c.width,c.height);
-  ctx.fillStyle="#0b8d56"; ctx.fillRect(54,36,300,42);
-  ctx.fillStyle="#e6b120"; ctx.fillRect(362,36,300,42);
-  ctx.fillStyle="#d35645"; ctx.fillRect(670,36,300,42);
-  ctx.fillStyle="#17324b";
-  ctx.font="bold 118px sans-serif";
-  ctx.textAlign="center";
-  ctx.textBaseline="middle";
-  ctx.fillText("億家超商", c.width/2, 154);
-  const tx=new THREE.CanvasTexture(c);
-  tx.colorSpace=THREE.SRGBColorSpace;
-  return tx;
-}
-
-function rampGroup(){
-  const g=new THREE.Group();
-  const base=box(2.05,.06,2.05,0xc7c7c7); base.position.y=.03; g.add(base);
-  const board=box(2,.14,2,0xb9b9b9);
-  board.position.set(0,.48,0);
-  board.rotation.z=-0.35;
-  g.add(board);
-  return g;
-}
-
-function stairsGroup(stepCount=5,totalH=1.5,depth=2){
-  const g=new THREE.Group();
-  const stepH=totalH/stepCount;
-  const stepD=depth/stepCount;
-  for(let i=0;i<stepCount;i++){
-    const s=box(2,stepH,(depth - i*stepD),0xbdbdbd);
-    s.position.set(0,stepH/2 + i*stepH,-depth/2 + (depth - i*stepD)/2);
-    g.add(s);
-  }
-  return g;
-}
-
-function smallStepsGroup(){
-  const g=new THREE.Group();
-  const s1=box(2,.18,1.4,0xc7c7c7); s1.position.set(0,.09,-.22); g.add(s1);
-  const s2=box(2,.18,.8,0xcfcfcf);  s2.position.set(0,.27,.08);  g.add(s2);
-  return g;
-}
-
-function glassWithFrame(kind="frame"){
-  const g=new THREE.Group();
-  const frameColor=0xbec6cf;
-  const outerW=2, outerH=2.7, thick=.12, glassD=.06;
-  const top=box(outerW,.12,thick,frameColor); top.position.set(0,2.64,0); g.add(top);
-  const bottom=box(outerW,.12,thick,frameColor); bottom.position.set(0,.06,0); g.add(bottom);
-  const left=box(.12,outerH,thick,frameColor); left.position.set(-.94,1.35,0); g.add(left);
-  const right=box(.12,outerH,thick,frameColor); right.position.set(.94,1.35,0); g.add(right);
-  const mid=box(.07,outerH,thick,frameColor); mid.position.set(0,1.35,0); g.add(mid);
-  const glass1=box(.84,2.45,glassD,0x93cfe3,{transparent:true,opacity:.42}); glass1.position.set(-.45,1.35,0); g.add(glass1);
-  const glass2=box(.84,2.45,glassD,0x93cfe3,{transparent:true,opacity:.42}); glass2.position.set(.45,1.35,0); g.add(glass2);
-  if(kind==="store"){
-    const sensor=box(.85,.18,.14,0x1d2731); sensor.position.set(0,2.82,.02); g.add(sensor);
-  }
-  return g;
-}
-
-function doubleGlassDoor(){
-  const g=new THREE.Group();
-  const frameColor=0xbfc6cf;
-  const outerW=1.6, outerH=2.5;
-  const top=box(outerW,.12,.14,frameColor); top.position.set(0,2.44,0); g.add(top);
-  const bottom=box(outerW,.12,.14,frameColor); bottom.position.set(0,.06,0); g.add(bottom);
-  const left=box(.12,outerH,.14,frameColor); left.position.set(-.74,1.25,0); g.add(left);
-  const right=box(.12,outerH,.14,frameColor); right.position.set(.74,1.25,0); g.add(right);
-  const middle=box(.08,outerH,.14,frameColor); middle.position.set(0,1.25,0); g.add(middle);
-  const d1=box(.63,2.22,.06,0x99d2e7,{transparent:true,opacity:.48}); d1.position.set(-.36,1.17,0); g.add(d1);
-  const d2=box(.63,2.22,.06,0x99d2e7,{transparent:true,opacity:.48}); d2.position.set(.36,1.17,0); g.add(d2);
-  const h1=box(.04,.42,.06,0x666b75); h1.position.set(-.08,1.17,.02); g.add(h1);
-  const h2=box(.04,.42,.06,0x666b75); h2.position.set(.08,1.17,.02); g.add(h2);
-  return g;
-}
-
-function woodenDoor(){
-  const g=new THREE.Group();
-  const frame=0x7b553b;
-  const panelColor=0x8a5e3c;
-  const top=box(1.28,.12,.16,frame); top.position.set(0,2.34,0); g.add(top);
-  const bottom=box(1.28,.12,.16,frame); bottom.position.set(0,.06,0); g.add(bottom);
-  const left=box(.12,2.4,.16,frame); left.position.set(-.58,1.2,0); g.add(left);
-  const right=box(.12,2.4,.16,frame); right.position.set(.58,1.2,0); g.add(right);
-  const panel=box(1.02,2.18,.08,panelColor); panel.position.set(0,1.17,.01); g.add(panel);
-  const inset1=box(.8,.55,.03,0x936749); inset1.position.set(0,.62,.07); g.add(inset1);
-  const inset2=box(.8,.55,.03,0x936749); inset2.position.set(0,1.72,.07); g.add(inset2);
-  const handle=box(.06,.24,.05,0xd9be62); handle.position.set(.38,1.12,.09); g.add(handle);
-  return g;
-}
-
-function lightboxGroup(){
-  const g=new THREE.Group();
-  const body=new THREE.Mesh(
-    new THREE.BoxGeometry(2.2,.55,.18),
-    new THREE.MeshStandardMaterial({color:0xf5f0dd,emissive:0xd8d0a2,emissiveIntensity:.7,roughness:.7})
-  );
-  body.position.y=2.58; body.castShadow=true; body.receiveShadow=true; g.add(body);
-  const tx=makeTextTexture("歡迎光臨","#fff7dc","#27405e","#ffe58f");
-  const face=new THREE.Mesh(
-    new THREE.PlaneGeometry(2,.34),
-    new THREE.MeshBasicMaterial({map:tx,transparent:false})
-  );
-  face.position.set(0,2.58,.11);
-  g.add(face);
-  return g;
-}
-
-function signGroup(){
-  const g=new THREE.Group();
-  const body=box(2.7,.82,.18,0xf4f1e8);
-  body.position.y=2.68;
-  g.add(body);
-  const face=new THREE.Mesh(
-    new THREE.PlaneGeometry(2.45,.62),
-    new THREE.MeshBasicMaterial({map:makeSignFace()})
-  );
-  face.position.set(0,2.68,.11);
-  g.add(face);
-  return g;
-}
-
-
-function ceilingLight(){
-  const g=new THREE.Group();
-  const frame=box(1.2,.12,.5,0xd8d8d8);
-  frame.position.y=2.75;
-  g.add(frame);
-  const glow=new THREE.Mesh(
-    new THREE.BoxGeometry(1.05,.05,.38),
-    new THREE.MeshStandardMaterial({color:0xfff4c6,emissive:0xffe89a,emissiveIntensity:1.8,roughness:.5})
-  );
-  glow.position.y=2.68;
-  g.add(glow);
-  return g;
-}
-
-function parkingGroup(){
-  const g=new THREE.Group();
-  const slab=box(2.6,.04,5,0x555a60);
-  slab.position.y=.02;
-  g.add(slab);
-  const lineMat=new THREE.MeshBasicMaterial({color:0xffffff});
-  for(const x of[-1.22,1.22]){
-    const line=new THREE.Mesh(new THREE.BoxGeometry(.05,.015,4.7),lineMat);
-    line.position.set(x,.045,0); g.add(line);
-  }
-  const stop=new THREE.Mesh(new THREE.BoxGeometry(2.4,.015,.06),lineMat);
-  stop.position.set(0,.045,-2.15); g.add(stop);
-  return g;
-}
-
-function arcadeGroup(){
-  const g=new THREE.Group();
-  const roof=box(3,.22,2.4,0xc7c7c7);
-  roof.position.set(0,3,0); g.add(roof);
-  for(const x of[-1.28,1.28]){
-    const p=box(.24,3,.24,0x9d9d9d);
-    p.position.set(x,1.5,-.9); g.add(p);
-  }
-  const floor=box(3,.12,2.4,0xbcbcbc);
-  floor.position.y=.06; g.add(floor);
-  return g;
-}
-
-function signPostGroup(){
-  const g=new THREE.Group();
-  const pole=box(.28,4,.28,0x777d83);
-  pole.position.y=2; g.add(pole);
-  const panel=box(2.2,1.1,.18,0xf4f1e8);
-  panel.position.set(0,4.15,0); g.add(panel);
-  const face=new THREE.Mesh(
-    new THREE.PlaneGeometry(2, .9),
-    new THREE.MeshBasicMaterial({map:makeSignFace()})
-  );
-  face.position.set(0,4.15,.11); g.add(face);
-  return g;
-}
-
-function autoDoorGroup(){
-  const g=glassWithFrame("store");
-  g.userData.autoDoor=true;
-  g.userData.openAmount=0;
-  g.userData.openTarget=0;
-  g.userData.leftDoor=null;
-  g.userData.rightDoor=null;
-
-  // Add two visible sliding glass panels over the existing framed glass.
-  const left=box(.78,2.25,.07,0x9bd3e6,{transparent:true,opacity:.5});
-  left.position.set(-.42,1.22,.07);
-  const right=box(.78,2.25,.07,0x9bd3e6,{transparent:true,opacity:.5});
-  right.position.set(.42,1.22,.07);
-  g.add(left); g.add(right);
-  g.userData.leftDoor=left;
-  g.userData.rightDoor=right;
-  return g;
-}
-
-function createObject(kind){
-  let obj;
-  if(kind==="foundation"){
-    obj=box(2,.35,2,0x8f8f8f);
-    obj.position.y=.175;
-  }else if(kind==="column"){
-    obj=box(.45,3,.45,0x9b9b9b);
-    obj.position.y=1.5;
-  }else if(kind==="beam"){
-    obj=box(2.2,.38,.45,0x929292);
-    obj.position.y=2.75;
-  }else if(kind==="slab"){
-    obj=box(2,.22,2,0xb4b4b4);
-    obj.position.y=3.05;
-  }else if(kind==="wall"){
-    obj=box(2,2.7,.16,0xe6e0d5);
-    obj.position.y=1.35;
-  }else if(kind==="glass"){
-    obj=box(2,2.5,.1,0x8bc7dc,{transparent:true,opacity:.55});
-    obj.position.y=1.35;
-  }else if(kind==="aluminum_glass"){
-    obj=glassWithFrame("frame");
-  }else if(kind==="door"){
-    obj=woodenDoor();
-  }else if(kind==="store_auto_door"){
-    obj=autoDoorGroup();
-  }else if(kind==="building_glass_door"){
-    obj=doubleGlassDoor();
-  }else if(kind==="stairs"){
-    obj=stairsGroup(5,1.6,2.2);
-  }else if(kind==="step"){
-    obj=smallStepsGroup();
-  }else if(kind==="ramp"){
-    obj=rampGroup();
-  }else if(kind==="lightbox"){
-    obj=lightboxGroup();
-  }else if(kind==="sign"){
-    obj=signGroup();
-  }else if(kind==="shelf"){
-    const g=new THREE.Group();
-    for(const y of[.25,.75,1.25,1.75]){
-      const shelf=box(1.8,.08,.55,0xc8c2b6);
-      shelf.position.y=y;g.add(shelf);
-    }
-    for(const x of[-.84,.84]){
-      const post=box(.08,1.9,.55,0x7b7b7b);
-      post.position.set(x,.95,0);g.add(post);
-    }
-    obj=g;
-  }else if(kind==="counter"){
-    const g=new THREE.Group();
-    const base=box(1.8,.95,.75,0xd7d1c6);base.position.y=.475;g.add(base);
-    const top=box(1.9,.1,.82,0x5f6268);top.position.y=1;g.add(top);
-    const screen=box(.35,.42,.08,0x20242b);screen.position.set(.45,1.25,-.2);g.add(screen);
-    obj=g;
-  }else if(kind==="fridge"){
-    const g=new THREE.Group();
-    const body=box(1.8,2.1,.7,0xe8edf0);body.position.y=1.05;g.add(body);
-    const frameL=box(.06,1.75,.08,0xbcc4cc); frameL.position.set(-.45,1.06,-.38); g.add(frameL);
-    const frameR=box(.06,1.75,.08,0xbcc4cc); frameR.position.set(.45,1.06,-.38); g.add(frameR);
-    const glass1=box(.76,1.7,.05,0x8fc8dd,{transparent:true,opacity:.45});glass1.position.set(-.45,1.08,-.38);g.add(glass1);
-    const glass2=box(.76,1.7,.05,0x8fc8dd,{transparent:true,opacity:.45});glass2.position.set(.45,1.08,-.38);g.add(glass2);
-    obj=g;
-  }else if(kind==="road"){
-    obj=box(3,.08,2,0x44484d);
-    obj.position.y=.04;
-  }else if(kind==="light"){
-    obj=ceilingLight();
-  }else if(kind==="parking"){
-    obj=parkingGroup();
-  }else if(kind==="arcade"){
-    obj=arcadeGroup();
-  }else if(kind==="signpost"){
-    obj=signPostGroup();
-  }else if(kind==="empty"){
-    obj=new THREE.Group();
-  }
-  obj.userData.kind=kind;
-  obj.traverse?.(c=>{if(c.isMesh){c.castShadow=true;c.receiveShadow=true}});
-  return obj;
-}
-
-function defaultY(kind){
-  return {
-    foundation:.175,column:1.5,beam:2.75,slab:3.05,wall:1.35,glass:1.35,aluminum_glass:0,
-    door:0,store_auto_door:0,building_glass_door:0,stairs:0,step:0,ramp:0,lightbox:0,sign:0,
-    shelf:0,counter:0,fridge:0,road:.04,light:0,parking:0,arcade:0,signpost:0,empty:0
-  }[kind] ?? 0;
-}
-
-function addObject(kind,x,y,z,ry=0,save=true){
-  if(kind==="empty") return null;
-  const obj=createObject(kind);
-  obj.position.set(x,typeof y==="number"?y:defaultY(kind),z);
-  obj.rotation.y=ry;
-  world.add(obj);
-  objects.push(obj);
-  if(save)saveWorld();
-  return obj;
-}
-
-function loadWorld(){
-  let data=null;
-  for(const key of LEGACY_KEYS){
-    try{
-      const raw=localStorage.getItem(key);
-      if(raw){
-        data=JSON.parse(raw);
-        if(Array.isArray(data)) break;
-      }
-    }catch{}
-  }
-  if(!Array.isArray(data)) data=[];
-  for(const d of data){
-    try{ addObject(d.kind,d.x,d.y,d.z,d.ry||0,false); }catch{}
-  }
-}
-loadWorld();
-
-function snap(v){ return Math.round(v); }
-
-function flatForward(){ return new THREE.Vector3(-Math.sin(yaw),0,-Math.cos(yaw)).normalize(); }
-function flatRight(){ return new THREE.Vector3(Math.cos(yaw),0,-Math.sin(yaw)).normalize(); }
-
-function updateCamera(){
-  camera.position.set(pos.x,pos.y-PLAYER_HEIGHT+EYE_HEIGHT,pos.z);
-  camera.rotation.order="YXZ";
-  camera.rotation.y=yaw;
-  camera.rotation.x=pitch;
-}
-
-function allMeshes(){
-  const arr=[ground,worksite,roadDemo];
-  objects.forEach(o=>{
-    if(o.isMesh) arr.push(o);
-    o.traverse?.(c=>{ if(c.isMesh && c!==o) arr.push(c); });
-  });
-  return arr;
-}
-
-function pick(){
-  raycaster.setFromCamera(center,camera);
-  return raycaster.intersectObjects(allMeshes(),false).find(h=>h.distance<=8) || null;
-}
-
-function rootObj(mesh){
-  let c=mesh;
-  while(c.parent && c.parent!==world && c.parent!==scene) c=c.parent;
-  return objects.includes(c)?c:null;
-}
-
-function placement(){
-  const h=pick();
-  if(!h) return null;
-  const p=h.point.clone();
-  const n=h.face?.normal?.clone() || new THREE.Vector3(0,1,0);
-  if(!h.object.userData.isGround && h.object!==worksite && h.object!==roadDemo){
-    n.transformDirection(h.object.matrixWorld);
-    p.addScaledVector(n,.6);
-  }
-  return {x:snap(p.x), z:snap(p.z)};
-}
-
-function clearRangePreview(){
-  if(rangePreviewGroup){ scene.remove(rangePreviewGroup); rangePreviewGroup=null; }
-}
-
-function clearPreview(){
-  if(preview){ scene.remove(preview); preview=null; }
-  clearRangePreview();
-}
-
-function makeGhost(kind,x,z,ry=0){
-  const g=createObject(kind);
-  g.position.set(x,defaultY(kind),z);
-  g.rotation.y=ry;
-  g.traverse?.(c=>{
-    if(c.isMesh){
-      c.material=c.material.clone();
-      c.material.transparent=true;
-      c.material.opacity=.35;
-      c.material.depthWrite=false;
-    }
-  });
-  return g;
-}
-
-function ensurePreview(){
-  clearPreview();
-  if(selectedKind==="empty") return;
-  if(!rangeMode){
-    preview=createObject(selectedKind);
-    preview.traverse?.(c=>{
-      if(c.isMesh){
-        c.material=c.material.clone();
-        c.material.transparent=true;
-        c.material.opacity=.42;
-        c.material.depthWrite=false;
-      }
-    });
-    scene.add(preview);
-  }
-}
-
-function lineCells(a,b){
-  const cells=[];
-  const dx=Math.abs(b.x-a.x), dz=Math.abs(b.z-a.z);
-  if(dx>=dz){
-    const z=a.z;
-    const from=Math.min(a.x,b.x), to=Math.max(a.x,b.x);
-    for(let x=from;x<=to;x++) cells.push({x,z,ry:0});
-  }else{
-    const x=a.x;
-    const from=Math.min(a.z,b.z), to=Math.max(a.z,b.z);
-    for(let z=from;z<=to;z++) cells.push({x,z,ry:Math.PI/2});
-  }
-  return cells;
-}
-
-function rangeCells(a,b){
-  const minX=Math.min(a.x,b.x), maxX=Math.max(a.x,b.x);
-  const minZ=Math.min(a.z,b.z), maxZ=Math.max(a.z,b.z);
-  if(selectedKind==="foundation" || selectedKind==="slab" || selectedKind==="road"){
-    const cells=[];
-    for(let x=minX;x<=maxX;x++) for(let z=minZ;z<=maxZ;z++) cells.push({x,z,ry:0});
-    return cells;
-  }
-  return lineCells(a,b);
-}
-
-
-function rectangleCells(a,b){
-  const minX=Math.min(a.x,b.x), maxX=Math.max(a.x,b.x);
-  const minZ=Math.min(a.z,b.z), maxZ=Math.max(a.z,b.z);
-  const cells=[];
-  for(let x=minX;x<=maxX;x++){
-    cells.push({x,z:minZ,ry:0});
-    if(maxZ!==minZ) cells.push({x,z:maxZ,ry:0});
-  }
-  for(let z=minZ+1;z<=maxZ-1;z++){
-    cells.push({x:minX,z,ry:Math.PI/2});
-    if(maxX!==minX) cells.push({x:maxX,z,ry:Math.PI/2});
-  }
-  return cells;
-}
-
-function buildRectangle(kind,a,b){
-  const minX=Math.min(a.x,b.x), maxX=Math.max(a.x,b.x);
-  const minZ=Math.min(a.z,b.z), maxZ=Math.max(a.z,b.z);
-  if(kind==="wall"){
-    for(const c of rectangleCells(a,b)) addObject("wall",c.x,defaultY("wall"),c.z,c.ry,false);
-  }else{
-    for(let x=minX;x<=maxX;x++){
-      for(let z=minZ;z<=maxZ;z++){
-        addObject(kind,x,defaultY(kind),z,0,false);
-      }
-    }
-  }
-  saveWorld();
-}
-
-function drawRangePreview(){
-  clearRangePreview();
-  if(!rangeStart || !rangeEnd || selectedKind==="empty") return;
-  rangePreviewGroup=new THREE.Group();
-  for(const c of rangeCells(rangeStart,rangeEnd)) rangePreviewGroup.add(makeGhost(selectedKind,c.x,c.z,c.ry));
-  scene.add(rangePreviewGroup);
-}
-
-function updatePreview(){
-  if(selectedKind==="empty"){ clearPreview(); return; }
-  if(rangeMode){
-    if(rangeStart){
-      const pl=placement();
-      if(pl){ rangeEnd=pl; drawRangePreview(); }
-    }
-    return;
-  }
-  if(!preview) return;
-  const pl=placement();
-  if(!pl){ preview.visible=false; return; }
-  preview.visible=true;
-  preview.position.x=pl.x;
-  preview.position.z=pl.z;
-  preview.position.y=defaultY(selectedKind);
-  preview.rotation.y=Math.round(yaw/(Math.PI/2))*(Math.PI/2);
-}
-
-function resetRangeUi(){
-  rangeStart=null;
-  rangeEnd=null;
-  clearRangePreview();
-  confirmBtn.style.display="none";
-  cancelBtn.style.display="none";
-  placeBtn.classList.toggle("rangeActive",rangeMode && selectedKind!=="empty");
-  placeBtn.textContent=selectedKind==="empty" ? "空手中" : (rangeMode ? "設定起點" : "施工 / 放置");
-}
-
-slots.forEach(btn=>btn.addEventListener("click",()=>{
-  selectedKind=btn.dataset.kind;
-  slots.forEach(b=>b.classList.toggle("active", b===btn));
-  resetRangeUi();
-  ensurePreview();
-  updateModeBadge();
-  updateCurrentItem();
-  setPanelOpen(false);
-}));
-
-placeBtn.addEventListener("click",()=>{
-  if(selectedKind==="empty") return;
-
-  const pl=placement();
-  if(!pl){
-    modeBadge.textContent="準星請先對準地面";
-    setToolPanelOpen(true);
-    return;
-  }
-
-  if(rangeMode){
-    setToolPanelOpen(true);
-
-    if(!rangeStart){
-      rangeStart={x:pl.x,z:pl.z};
-      rangeEnd={x:pl.x,z:pl.z};
-      placeBtn.textContent="設定終點";
-      placeBtn.classList.add("rangeActive");
-      cancelBtn.style.display="block";
-      confirmBtn.style.display="none";
-      drawRangePreview();
-      modeBadge.textContent="起點完成，移動準星後按設定終點";
-      requestAnimationFrame(()=>placeBtn.scrollIntoView({block:"nearest"}));
-      return;
-    }
-
-    rangeEnd={x:pl.x,z:pl.z};
-    drawRangePreview();
-    placeBtn.textContent="重設終點";
-    confirmBtn.style.display="block";
-    cancelBtn.style.display="block";
-    modeBadge.textContent="終點完成，按確認建造";
-    requestAnimationFrame(()=>confirmBtn.scrollIntoView({block:"nearest"}));
-    return;
-  }
-
-  const rot=Math.round(yaw/(Math.PI/2))*(Math.PI/2);
-  addObject(selectedKind,pl.x,defaultY(selectedKind),pl.z,rot,true);
-});
-
-
-function requireRangeForQuickBuild(){
-  if(!rangeStart || !rangeEnd){
-    modeBadge.textContent="請先設定起點與終點";
-    return false;
-  }
-  return true;
-}
-
-fourWallsBtn.addEventListener("click",()=>{
-  if(!requireRangeForQuickBuild()) return;
-  buildRectangle("wall",rangeStart,rangeEnd);
-  resetRangeUi();
-});
-
-fillBaseBtn.addEventListener("click",()=>{
-  if(!requireRangeForQuickBuild()) return;
-  buildRectangle("foundation",rangeStart,rangeEnd);
-  resetRangeUi();
-});
-
-fillSlabBtn.addEventListener("click",()=>{
-  if(!requireRangeForQuickBuild()) return;
-  buildRectangle("slab",rangeStart,rangeEnd);
-  resetRangeUi();
-});
-
-rangeBtn.addEventListener("click",()=>{
-  rangeMode=!rangeMode;
-  rangeBtn.classList.toggle("active",rangeMode);
-  resetRangeUi();
-  ensurePreview();
-  updateModeBadge();
-  setToolPanelOpen(true);
-});
-
-confirmBtn.addEventListener("click",()=>{
-  if(!rangeStart || !rangeEnd || selectedKind==="empty") return;
-  for(const c of rangeCells(rangeStart,rangeEnd)){
-    addObject(selectedKind,c.x,defaultY(selectedKind),c.z,c.ry,false);
-  }
-  saveWorld();
-  resetRangeUi();
-});
-
-cancelBtn.addEventListener("click",()=>{
-  resetRangeUi();
-});
-
-removeBtn.addEventListener("click",()=>{
-  const h=pick();
-  if(!h) return;
-  const root=rootObj(h.object);
-  if(!root) return;
-  world.remove(root);
-  const i=objects.indexOf(root);
-  if(i>=0) objects.splice(i,1);
-  saveWorld();
-});
-
-function setFlying(next){
-  flying=next;
-  velocityY=0;
-  flyBtn.classList.toggle("active",flying);
-  updateModeBadge();
-}
-flyBtn.addEventListener("click",()=>setFlying(!flying));
-
-jumpBtn.addEventListener("pointerdown",()=>{
-  if(flying) verticalInput=1;
-  else if(onGround){ velocityY=JUMP_SPEED; onGround=false; }
-});
-jumpBtn.addEventListener("pointerup",()=>{ if(flying) verticalInput=0; });
-jumpBtn.addEventListener("pointercancel",()=>{ if(flying) verticalInput=0; });
-
-downBtn.addEventListener("pointerdown",()=>{ if(flying) verticalInput=-1; });
-downBtn.addEventListener("pointerup",()=>{ if(flying) verticalInput=0; });
-downBtn.addEventListener("pointercancel",()=>{ if(flying) verticalInput=0; });
-
-function changeZoom(delta){
-  targetFov=Math.max(45,Math.min(92,targetFov+delta));
-}
-zoomInBtn.addEventListener("click",()=>changeZoom(-7));
-zoomOutBtn.addEventListener("click",()=>changeZoom(7));
-window.addEventListener("wheel",e=>{
-  if(e.deltaY<0) changeZoom(-3);
-  else changeZoom(3);
-}, {passive:true});
-
-function joyUpdate(clientX,clientY){
-  const r=joystick.getBoundingClientRect();
-  const cx=r.left+r.width/2, cy=r.top+r.height/2;
-  let dx=clientX-cx, dy=clientY-cy;
-  const max=39;
-  const len=Math.hypot(dx,dy);
-  if(len>max){ dx=dx/len*max; dy=dy/len*max; }
-  stick.style.transform=`translate(${dx}px,${dy}px)`;
-  targetMoveX=dx/max;
-  targetMoveY=dy/max;
-}
-joystick.addEventListener("pointerdown",e=>{
-  joystickPointer=e.pointerId;
-  joystick.setPointerCapture(e.pointerId);
-  joyUpdate(e.clientX,e.clientY);
-  e.preventDefault();
-});
-joystick.addEventListener("pointermove",e=>{
-  if(e.pointerId!==joystickPointer) return;
-  joyUpdate(e.clientX,e.clientY);
-  e.preventDefault();
-});
-function joyEnd(e){
-  if(e.pointerId!==joystickPointer) return;
-  joystickPointer=null;
-  targetMoveX=0; targetMoveY=0;
-  stick.style.transform="translate(0,0)";
-  e.preventDefault();
-}
-joystick.addEventListener("pointerup",joyEnd);
-joystick.addEventListener("pointercancel",joyEnd);
-
-canvas.addEventListener("pointerdown",e=>{
-  if(e.clientX<innerWidth*.38) return;
-  lookPointer=e.pointerId;
-  lookLastX=e.clientX; lookLastY=e.clientY;
-  canvas.setPointerCapture?.(e.pointerId);
-  e.preventDefault();
-});
-canvas.addEventListener("pointermove",e=>{
-  if(e.pointerId!==lookPointer) return;
-  const dx=e.clientX-lookLastX, dy=e.clientY-lookLastY;
-  yaw-=dx*.0055;
-  pitch-=dy*.0048;
-  pitch=Math.max(-1.25,Math.min(1.25,pitch));
-  lookLastX=e.clientX; lookLastY=e.clientY;
-  e.preventDefault();
-});
-canvas.addEventListener("pointerup",e=>{ if(e.pointerId===lookPointer) lookPointer=null; e.preventDefault(); });
-canvas.addEventListener("pointercancel",e=>{ if(e.pointerId===lookPointer) lookPointer=null; });
-
-document.addEventListener("contextmenu",e=>e.preventDefault());
-
-togglePanel.addEventListener("click",()=>{
-  setPanelOpen(!itemPanel.classList.contains("open"));
-});
-
-toggleToolsBtn.addEventListener("click",()=>{
-  setToolPanelOpen(!toolPanel.classList.contains("open"));
-});
-
-ensurePreview();
-updateModeBadge();
-updateCurrentItem();
-setPanelOpen(false);
-setToolPanelOpen(false);
-
-let last=performance.now();
-function loop(now){
-  const dt=Math.min(.035,(now-last)/1000); last=now;
-
-  moveX += (targetMoveX-moveX) * Math.min(1, dt*12);
-  moveY += (targetMoveY-moveY) * Math.min(1, dt*12);
-
-  const move=new THREE.Vector3();
-  move.addScaledVector(flatRight(),moveX);
-  move.addScaledVector(flatForward(),-moveY);
-  if(move.lengthSq()>1) move.normalize();
-
-  const speed=flying?FLY_SPEED:MOVE_SPEED;
-  pos.addScaledVector(move,speed*dt);
-
-  if(flying){
-    pos.y += verticalInput*FLY_SPEED*dt;
-    pos.y = Math.max(1.0, Math.min(45, pos.y));
-  }else{
-    velocityY -= GRAVITY*dt;
-    pos.y += velocityY*dt;
-    if(pos.y<=PLAYER_HEIGHT){
-      pos.y=PLAYER_HEIGHT; velocityY=0; onGround=true;
-    }
-  }
-
-  pos.x=Math.max(-105,Math.min(105,pos.x));
-  pos.z=Math.max(-105,Math.min(105,pos.z));
-
-  camera.fov += (targetFov-camera.fov) * Math.min(1, dt*10);
-  camera.updateProjectionMatrix();
-
-  updateCamera();
-  updatePreview();
-
-  // Convenience-store automatic doors open when the player approaches.
-  for(const obj of objects){
-    if(obj.userData?.autoDoor && obj.userData.leftDoor && obj.userData.rightDoor){
-      const d=Math.hypot(pos.x-obj.position.x,pos.z-obj.position.z);
-      obj.userData.openTarget = d < 2.6 ? 1 : 0;
-      obj.userData.openAmount += (obj.userData.openTarget-obj.userData.openAmount) * Math.min(1,dt*6);
-      const a=obj.userData.openAmount;
-      obj.userData.leftDoor.position.x=-.42-.34*a;
-      obj.userData.rightDoor.position.x=.42+.34*a;
-    }
-  }
-
-  renderer.render(scene,camera);
-  requestAnimationFrame(loop);
-}
-requestAnimationFrame(loop);
-
-if("serviceWorker" in navigator){
-  navigator.serviceWorker.register("./sw.js").catch(()=>{});
-}
+function loop(t){const dt=Math.min(.033,(t-s.last)/1000);s.last=t;update(dt);draw();ui();requestAnimationFrame(loop)}
+ui();draw();requestAnimationFrame(t=>{s.last=t;requestAnimationFrame(loop)});
+})();
 </script>
 </body>
 </html>
