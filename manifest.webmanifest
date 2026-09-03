@@ -1,6 +1,6 @@
 {
-  "name": "自由建造",
-  "short_name": "自由建造",
+  "name": "億家設計遊戲",
+  "short_name": "億家設計",
   "start_url": "./",
   "display": "standalone",
   "background_color": "#111827",

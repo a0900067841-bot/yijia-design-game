@@ -6,23 +6,28 @@
   <meta name="theme-color" content="#111827" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <title>自由建造</title>
+  <title>億家設計遊戲</title>
   <link rel="manifest" href="./manifest.webmanifest" />
   <style>
-    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-    html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; background: #111827; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
-    body { touch-action: none; overscroll-behavior: none; }
-    #app { position: fixed; inset: 0; overflow: hidden; background: #dfe8ea; }
-    #scene { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
-    .topbar { position: absolute; top: max(10px, env(safe-area-inset-top)); left: 10px; right: 10px; display:flex; justify-content:space-between; gap:8px; pointer-events:none; }
-    .group { display:flex; gap:8px; pointer-events:auto; }
-    button { min-width: 46px; min-height: 46px; border: 1px solid rgba(255,255,255,.28); border-radius: 14px; background: rgba(17,24,39,.82); color:white; font-size:15px; padding: 0 14px; backdrop-filter: blur(12px); }
-    button.active { background: rgba(37,99,235,.92); }
-    .hint { position:absolute; left:12px; bottom: calc(92px + env(safe-area-inset-bottom)); max-width:70%; padding:9px 12px; border-radius:12px; background:rgba(17,24,39,.78); color:white; font-size:13px; backdrop-filter:blur(10px); pointer-events:none; }
-    .toolbar { position:absolute; left:0; right:0; bottom:0; padding: 8px 8px calc(8px + env(safe-area-inset-bottom)); background:linear-gradient(to top,rgba(17,24,39,.96),rgba(17,24,39,.78)); }
-    .tools { display:flex; gap:8px; overflow-x:auto; scrollbar-width:none; }
-    .tools::-webkit-scrollbar { display:none; }
-    .tool { flex:0 0 auto; min-width:74px; }
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+    html,body{width:100%;height:100%;margin:0;overflow:hidden;background:#111827;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    body{touch-action:none;overscroll-behavior:none}
+    #app{position:fixed;inset:0;overflow:hidden;background:#dfe8ea}
+    #scene{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+    .topbar{position:absolute;top:max(10px,env(safe-area-inset-top));left:10px;right:10px;display:flex;justify-content:space-between;gap:8px;pointer-events:none}
+    .group{display:flex;gap:8px;pointer-events:auto}
+    button{min-width:46px;min-height:46px;border:1px solid rgba(255,255,255,.28);border-radius:14px;background:rgba(17,24,39,.84);color:white;font-size:15px;padding:0 14px;backdrop-filter:blur(12px)}
+    button.active{background:rgba(37,99,235,.94)}
+    .hint{position:absolute;left:12px;bottom:calc(98px + env(safe-area-inset-bottom));max-width:74%;padding:9px 12px;border-radius:12px;background:rgba(17,24,39,.8);color:#fff;font-size:13px;pointer-events:none}
+    .toolbar{position:absolute;left:0;right:0;bottom:0;padding:8px 8px calc(8px + env(safe-area-inset-bottom));background:linear-gradient(to top,rgba(17,24,39,.98),rgba(17,24,39,.78))}
+    .tools{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none}.tools::-webkit-scrollbar{display:none}.tool{flex:0 0 auto;min-width:72px}
+    .editPanel{position:absolute;right:10px;top:calc(max(10px,env(safe-area-inset-top)) + 56px);display:none;flex-direction:column;gap:7px}
+    .editPanel.show{display:flex}
+    .movePad{position:absolute;left:10px;top:calc(max(10px,env(safe-area-inset-top)) + 58px);display:none;grid-template-columns:46px 46px 46px;grid-template-rows:46px 46px 46px;gap:5px}
+    .movePad.show{display:grid}
+    .movePad button{min-width:46px;min-height:46px;padding:0}
+    .movePad .up{grid-column:2}.movePad .left{grid-column:1;grid-row:2}.movePad .right{grid-column:3;grid-row:2}.movePad .down{grid-column:2;grid-row:3}
+    .saveBadge{position:absolute;right:12px;bottom:calc(98px + env(safe-area-inset-bottom));padding:7px 10px;border-radius:10px;background:rgba(17,24,39,.72);color:#fff;font-size:12px;display:none;pointer-events:none}
   </style>
 </head>
 <body>
@@ -40,7 +45,20 @@
     </div>
   </div>
 
+  <div id="editPanel" class="editPanel">
+    <button id="rotateBtn">↻ 旋轉</button>
+    <button id="deleteBtn">刪除</button>
+  </div>
+
+  <div id="movePad" class="movePad">
+    <button class="up" data-move="z-">↑</button>
+    <button class="left" data-move="x-">←</button>
+    <button class="right" data-move="x+">→</button>
+    <button class="down" data-move="z+">↓</button>
+  </div>
+
   <div id="hint" class="hint">拖曳空地拉牆</div>
+  <div id="saveBadge" class="saveBadge">已儲存</div>
 
   <div class="toolbar">
     <div class="tools">
@@ -50,6 +68,7 @@
       <button class="tool" data-tool="window">窗</button>
       <button class="tool" data-tool="road">道路</button>
       <button class="tool" data-tool="rail">軌道</button>
+      <button class="tool" data-tool="select">選取</button>
     </div>
   </div>
 </div>
@@ -57,173 +76,194 @@
 <script type="module">
 import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.179.1/build/three.module.js";
 
-const canvas = document.getElementById("scene");
-const hint = document.getElementById("hint");
-const cameraBtn = document.getElementById("cameraBtn");
-const buildBtn = document.getElementById("buildBtn");
-const undoBtn = document.getElementById("undoBtn");
-const clearBtn = document.getElementById("clearBtn");
-const toolButtons = [...document.querySelectorAll(".tool")];
+const canvas=document.getElementById("scene");
+const hint=document.getElementById("hint");
+const cameraBtn=document.getElementById("cameraBtn");
+const buildBtn=document.getElementById("buildBtn");
+const undoBtn=document.getElementById("undoBtn");
+const clearBtn=document.getElementById("clearBtn");
+const editPanel=document.getElementById("editPanel");
+const movePad=document.getElementById("movePad");
+const rotateBtn=document.getElementById("rotateBtn");
+const deleteBtn=document.getElementById("deleteBtn");
+const saveBadge=document.getElementById("saveBadge");
+const toolButtons=[...document.querySelectorAll(".tool")];
+const moveButtons=[...document.querySelectorAll("[data-move]")];
 
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
-renderer.shadowMap.enabled = true;
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio||1,2));
+renderer.shadowMap.enabled=true;
 
-const scene = new THREE.Scene();
-scene.background = new THREE.Color(0xdfe8ea);
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0xdfe8ea);
 
-const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 500);
-const target = new THREE.Vector3(0,0,0);
-let yaw = 0.75, pitch = 0.62, distance = 24;
+const camera=new THREE.PerspectiveCamera(50,1,.1,500);
+const target=new THREE.Vector3(0,0,0);
+let yaw=.75,pitch=.62,distance=24;
 
-scene.add(new THREE.HemisphereLight(0xffffff, 0x68725f, 2.4));
-const sun = new THREE.DirectionalLight(0xffffff, 2.5);
-sun.position.set(18, 28, 14);
-sun.castShadow = true;
+scene.add(new THREE.HemisphereLight(0xffffff,0x68725f,2.4));
+const sun=new THREE.DirectionalLight(0xffffff,2.5);
+sun.position.set(18,28,14);
+sun.castShadow=true;
 scene.add(sun);
 
-const ground = new THREE.Mesh(
+const ground=new THREE.Mesh(
   new THREE.PlaneGeometry(120,120),
-  new THREE.MeshStandardMaterial({ color: 0x91aa80, roughness: 1 })
+  new THREE.MeshStandardMaterial({color:0x91aa80,roughness:1})
 );
-ground.rotation.x = -Math.PI / 2;
-ground.receiveShadow = true;
+ground.rotation.x=-Math.PI/2;
+ground.receiveShadow=true;
 scene.add(ground);
 
-const grid = new THREE.GridHelper(120, 60, 0x6e796c, 0x889584);
-grid.position.y = 0.01;
+const grid=new THREE.GridHelper(120,60,0x6e796c,0x889584);
+grid.position.y=.01;
 scene.add(grid);
 
-const raycaster = new THREE.Raycaster();
-const pointer = new THREE.Vector2();
-const objects = [];
-const walls = [];
+const raycaster=new THREE.Raycaster();
+const pointer=new THREE.Vector2();
+const objects=[];
+const walls=[];
 
-let mode = "build";
-let tool = "wall";
-let wallStart = null;
-let wallPreview = null;
-let pointerDown = false;
-let pointerMoved = false;
-let lastX = 0, lastY = 0;
-let pinchStart = null;
+let mode="build";
+let tool="wall";
+let wallStart=null;
+let wallPreview=null;
+let pointerDown=false;
+let lastX=0,lastY=0;
+let pinchStart=null;
+let selected=null;
+let saveTimer=null;
 
-function setMode(next) {
-  mode = next;
-  cameraBtn.classList.toggle("active", mode === "camera");
-  buildBtn.classList.toggle("active", mode === "build");
-  hint.textContent = mode === "camera"
-    ? "單指拖曳旋轉視角，雙指縮放"
-    : tool === "wall" ? "拖曳空地拉牆" : "點空地放置";
-}
-cameraBtn.addEventListener("click", () => setMode("camera"));
-buildBtn.addEventListener("click", () => setMode("build"));
-
-toolButtons.forEach(btn => {
-  btn.addEventListener("click", () => {
-    tool = btn.dataset.tool;
-    setMode("build");
-    toolButtons.forEach(b => b.classList.toggle("active", b === btn));
-    hint.textContent = tool === "wall"
-      ? "拖曳空地拉牆"
-      : (tool === "door" || tool === "window")
-        ? "靠近牆壁點一下放置"
-        : "點空地放置";
-  });
-});
-
-function updateSize() {
-  const w = innerWidth, h = innerHeight;
-  renderer.setSize(w, h, false);
-  camera.aspect = w / h;
+function updateSize(){
+  renderer.setSize(innerWidth,innerHeight,false);
+  camera.aspect=innerWidth/innerHeight;
   camera.updateProjectionMatrix();
 }
-addEventListener("resize", updateSize);
+addEventListener("resize",updateSize);
 updateSize();
 
-function updateCamera() {
-  const cp = Math.cos(pitch);
+function updateCamera(){
+  const cp=Math.cos(pitch);
   camera.position.set(
-    target.x + distance * cp * Math.sin(yaw),
-    target.y + distance * Math.sin(pitch),
-    target.z + distance * cp * Math.cos(yaw)
+    target.x+distance*cp*Math.sin(yaw),
+    target.y+distance*Math.sin(pitch),
+    target.z+distance*cp*Math.cos(yaw)
   );
   camera.lookAt(target);
 }
 
-function snap(v) { return Math.round(v * 2) / 2; }
+function snap(v){return Math.round(v*2)/2}
 
-function groundPoint(clientX, clientY) {
-  const r = canvas.getBoundingClientRect();
-  pointer.x = ((clientX-r.left)/r.width)*2-1;
-  pointer.y = -((clientY-r.top)/r.height)*2+1;
-  raycaster.setFromCamera(pointer, camera);
-  const hit = raycaster.intersectObject(ground, false)[0];
-  if (!hit) return null;
-  return new THREE.Vector3(snap(hit.point.x), 0, snap(hit.point.z));
+function setRay(clientX,clientY){
+  const r=canvas.getBoundingClientRect();
+  pointer.x=((clientX-r.left)/r.width)*2-1;
+  pointer.y=-((clientY-r.top)/r.height)*2+1;
+  raycaster.setFromCamera(pointer,camera);
 }
 
-function mat(color, transparent=false, opacity=1) {
-  return new THREE.MeshStandardMaterial({ color, roughness: .82, transparent, opacity });
+function groundPoint(clientX,clientY){
+  setRay(clientX,clientY);
+  const hit=raycaster.intersectObject(ground,false)[0];
+  return hit?new THREE.Vector3(snap(hit.point.x),0,snap(hit.point.z)):null;
 }
 
-function addObject(obj, kind) {
-  obj.userData.kind = kind;
+function mat(color,transparent=false,opacity=1){
+  return new THREE.MeshStandardMaterial({color,roughness:.82,transparent,opacity});
+}
+
+function flashSaved(){
+  saveBadge.style.display="block";
+  clearTimeout(saveTimer);
+  saveTimer=setTimeout(()=>saveBadge.style.display="none",700);
+}
+
+function serializeObject(o){
+  return {
+    kind:o.userData.kind,
+    x:o.position.x,y:o.position.y,z:o.position.z,
+    ry:o.rotation.y,
+    wallA:o.userData.wallA||null,
+    wallB:o.userData.wallB||null
+  };
+}
+
+function saveWorld(){
+  try{
+    localStorage.setItem("yijiaDesignGameV2",JSON.stringify(objects.map(serializeObject)));
+    flashSaved();
+  }catch{}
+}
+
+function addObject(obj,kind,save=true){
+  obj.userData.kind=kind;
   scene.add(obj);
   objects.push(obj);
-  if (kind === "wall") walls.push(obj);
+  if(kind==="wall")walls.push(obj);
+  if(save)saveWorld();
 }
 
-function makeWall(a,b,preview=false) {
-  const dx=b.x-a.x, dz=b.z-a.z;
+function makeWall(a,b,preview=false){
+  const dx=b.x-a.x,dz=b.z-a.z;
   const len=Math.max(.5,Math.hypot(dx,dz));
   const mesh=new THREE.Mesh(
     new THREE.BoxGeometry(len,2.7,.16),
-    mat(preview?0x9fb2bc:0xe6e1d8, preview, preview?.62:1)
+    mat(preview?0x9fb2bc:0xe6e1d8,preview,preview?.62:1)
   );
   mesh.position.set((a.x+b.x)/2,1.35,(a.z+b.z)/2);
   mesh.rotation.y=-Math.atan2(dz,dx);
   mesh.castShadow=!preview;
   mesh.receiveShadow=true;
+  mesh.userData.wallA={x:a.x,z:a.z};
+  mesh.userData.wallB={x:b.x,z:b.z};
   return mesh;
 }
 
-function placeSimple(p, kind) {
+function makeRail(p){
+  const g=new THREE.Group();
+  for(const x of[-.48,.48]){
+    const r=new THREE.Mesh(new THREE.BoxGeometry(.08,.08,3),mat(0x555555));
+    r.position.set(x,.08,0);
+    g.add(r);
+  }
+  for(let z=-1.3;z<=1.3;z+=.45){
+    const t=new THREE.Mesh(new THREE.BoxGeometry(1.35,.06,.13),mat(0x6a5443));
+    t.position.set(0,.04,z);
+    g.add(t);
+  }
+  g.position.set(p.x,.02,p.z);
+  return g;
+}
+
+function placeSimple(p,kind,save=true){
   let mesh;
-  if (kind === "floor") {
-    mesh = new THREE.Mesh(new THREE.BoxGeometry(2,.14,2), mat(0xb9a78c));
+  if(kind==="floor"){
+    mesh=new THREE.Mesh(new THREE.BoxGeometry(2,.14,2),mat(0xb9a78c));
     mesh.position.set(p.x,.07,p.z);
-  } else if (kind === "road") {
-    mesh = new THREE.Mesh(new THREE.BoxGeometry(4,.06,2), mat(0x454545));
+  }else if(kind==="road"){
+    mesh=new THREE.Mesh(new THREE.BoxGeometry(4,.06,2),mat(0x454545));
     mesh.position.set(p.x,.03,p.z);
-  } else if (kind === "rail") {
-    const g = new THREE.Group();
-    for (const x of [-.48,.48]) {
-      const r = new THREE.Mesh(new THREE.BoxGeometry(.08,.08,3), mat(0x555555));
-      r.position.set(x,.08,0); g.add(r);
-    }
-    for (let z=-1.3; z<=1.3; z+=.45) {
-      const t = new THREE.Mesh(new THREE.BoxGeometry(1.35,.06,.13), mat(0x6a5443));
-      t.position.set(0,.04,z); g.add(t);
-    }
-    g.position.set(p.x,.02,p.z);
-    mesh=g;
+  }else if(kind==="rail"){
+    mesh=makeRail(p);
   }
-  addObject(mesh, kind);
+  addObject(mesh,kind,save);
+  return mesh;
 }
 
-function nearestWall(p) {
-  let best=null, dist=Infinity;
-  for (const w of walls) {
+function nearestWall(p){
+  let best=null,dist=Infinity;
+  for(const w of walls){
     const d=Math.hypot(p.x-w.position.x,p.z-w.position.z);
-    if (d<dist) { dist=d; best=w; }
+    if(d<dist){dist=d;best=w}
   }
-  return dist <= 2.2 ? best : null;
+  return dist<=2.2?best:null;
 }
 
-function placeAttached(p, kind) {
+function placeAttached(p,kind,save=true){
   const w=nearestWall(p);
-  if (!w) { hint.textContent="請靠近牆壁放置"; return; }
+  if(!w){
+    hint.textContent="請靠近牆壁放置";
+    return null;
+  }
   const isDoor=kind==="door";
   const mesh=new THREE.Mesh(
     new THREE.BoxGeometry(isDoor?1:1.3,isDoor?2.15:1.05,.2),
@@ -231,117 +271,275 @@ function placeAttached(p, kind) {
   );
   mesh.position.set(p.x,isDoor?1.075:1.55,p.z);
   mesh.rotation.y=w.rotation.y;
-  addObject(mesh,kind);
+  addObject(mesh,kind,save);
+  return mesh;
 }
 
-function removePreview() {
-  if (wallPreview) { scene.remove(wallPreview); wallPreview=null; }
-}
-
-undoBtn.addEventListener("click", () => {
-  removePreview();
-  const obj=objects.pop();
-  if (!obj) return;
-  scene.remove(obj);
-  if (obj.userData.kind==="wall") {
-    const i=walls.indexOf(obj); if (i>=0) walls.splice(i,1);
+function removePreview(){
+  if(wallPreview){
+    scene.remove(wallPreview);
+    wallPreview=null;
   }
+}
+
+function setMode(next){
+  mode=next;
+  cameraBtn.classList.toggle("active",mode==="camera");
+  buildBtn.classList.toggle("active",mode==="build");
+  if(mode==="camera")hint.textContent="單指拖曳旋轉視角，雙指縮放";
+  else if(tool==="wall")hint.textContent="拖曳空地拉牆";
+  else if(tool==="select")hint.textContent="點物件選取";
+  else if(tool==="door"||tool==="window")hint.textContent="靠近牆壁點一下放置";
+  else hint.textContent="點空地放置";
+}
+
+cameraBtn.addEventListener("click",()=>setMode("camera"));
+buildBtn.addEventListener("click",()=>setMode("build"));
+
+function clearSelection(){
+  if(selected?.material?.emissive)selected.material.emissive.setHex(0);
+  selected=null;
+  editPanel.classList.remove("show");
+  movePad.classList.remove("show");
+}
+
+function setTool(next){
+  tool=next;
+  clearSelection();
+  setMode("build");
+  toolButtons.forEach(b=>b.classList.toggle("active",b.dataset.tool===tool));
+}
+
+toolButtons.forEach(btn=>btn.addEventListener("click",()=>setTool(btn.dataset.tool)));
+
+function objectMeshes(){
+  const meshes=[];
+  objects.forEach(o=>{
+    if(o.isMesh)meshes.push(o);
+    if(o.traverse)o.traverse(c=>{
+      if(c.isMesh&&c!==o)meshes.push(c);
+    });
+  });
+  return meshes;
+}
+
+function rootObjectFromMesh(mesh){
+  let current=mesh;
+  while(current.parent&&current.parent!==scene){
+    if(objects.includes(current))return current;
+    current=current.parent;
+  }
+  return objects.includes(current)?current:mesh;
+}
+
+function pickObject(clientX,clientY){
+  setRay(clientX,clientY);
+  const hit=raycaster.intersectObjects(objectMeshes(),false)[0];
+  if(!hit){
+    clearSelection();
+    hint.textContent="沒有選到物件";
+    return;
+  }
+  const root=rootObjectFromMesh(hit.object);
+  if(!objects.includes(root)){
+    clearSelection();
+    return;
+  }
+  clearSelection();
+  selected=root;
+  if(selected.material?.emissive)selected.material.emissive.setHex(0x222222);
+  editPanel.classList.add("show");
+  movePad.classList.add("show");
+  hint.textContent="已選取：可移動、旋轉或刪除";
+}
+
+rotateBtn.addEventListener("click",()=>{
+  if(!selected)return;
+  selected.rotation.y+=Math.PI/2;
+  saveWorld();
 });
 
-clearBtn.addEventListener("click", () => {
+deleteBtn.addEventListener("click",()=>{
+  if(!selected)return;
+  scene.remove(selected);
+  let i=objects.indexOf(selected);
+  if(i>=0)objects.splice(i,1);
+  i=walls.indexOf(selected);
+  if(i>=0)walls.splice(i,1);
+  clearSelection();
+  saveWorld();
+});
+
+moveButtons.forEach(btn=>btn.addEventListener("click",()=>{
+  if(!selected)return;
+  const step=.5;
+  const dir=btn.dataset.move;
+  if(dir==="x-")selected.position.x-=step;
+  if(dir==="x+")selected.position.x+=step;
+  if(dir==="z-")selected.position.z-=step;
+  if(dir==="z+")selected.position.z+=step;
+  saveWorld();
+}));
+
+undoBtn.addEventListener("click",()=>{
   removePreview();
-  for (const obj of objects) scene.remove(obj);
-  objects.length=0; walls.length=0;
+  clearSelection();
+  const obj=objects.pop();
+  if(!obj){
+    hint.textContent="沒有可復原的物件";
+    return;
+  }
+  scene.remove(obj);
+  const i=walls.indexOf(obj);
+  if(i>=0)walls.splice(i,1);
+  saveWorld();
 });
 
-canvas.addEventListener("pointerdown", e => {
-  e.preventDefault();
-  pointerDown=true; pointerMoved=false; lastX=e.clientX; lastY=e.clientY;
-  canvas.setPointerCapture?.(e.pointerId);
+clearBtn.addEventListener("click",()=>{
+  removePreview();
+  clearSelection();
+  for(const obj of objects)scene.remove(obj);
+  objects.length=0;
+  walls.length=0;
+  saveWorld();
+  hint.textContent="已清空";
+});
 
-  if (mode==="build") {
-    const p=groundPoint(e.clientX,e.clientY);
-    if (!p) return;
-    if (tool==="wall") {
-      wallStart=p;
-      wallPreview=makeWall(p,p,true);
-      scene.add(wallPreview);
-    } else if (tool==="door" || tool==="window") {
-      placeAttached(p,tool);
-    } else {
-      placeSimple(p,tool);
+function loadWorld(){
+  let data=[];
+  try{
+    data=JSON.parse(localStorage.getItem("yijiaDesignGameV2")||"[]");
+  }catch{}
+  for(const d of data){
+    if(d.kind==="wall"&&d.wallA&&d.wallB){
+      const a=new THREE.Vector3(d.wallA.x,0,d.wallA.z);
+      const b=new THREE.Vector3(d.wallB.x,0,d.wallB.z);
+      const m=makeWall(a,b,false);
+      m.position.set(d.x,d.y,d.z);
+      m.rotation.y=d.ry||0;
+      addObject(m,"wall",false);
+    }else if(["floor","road","rail"].includes(d.kind)){
+      const m=placeSimple(new THREE.Vector3(d.x,0,d.z),d.kind,false);
+      if(m){
+        m.position.set(d.x,d.y,d.z);
+        m.rotation.y=d.ry||0;
+      }
+    }else if(d.kind==="door"||d.kind==="window"){
+      const isDoor=d.kind==="door";
+      const m=new THREE.Mesh(
+        new THREE.BoxGeometry(isDoor?1:1.3,isDoor?2.15:1.05,.2),
+        mat(isDoor?0x795c43:0x9bc3d2,!isDoor,!isDoor?.55:1)
+      );
+      m.position.set(d.x,d.y,d.z);
+      m.rotation.y=d.ry||0;
+      addObject(m,d.kind,false);
     }
   }
-}, {passive:false});
+}
 
-canvas.addEventListener("pointermove", e => {
+canvas.addEventListener("pointerdown",e=>{
   e.preventDefault();
-  if (!pointerDown) return;
+  pointerDown=true;
+  lastX=e.clientX;
+  lastY=e.clientY;
+  canvas.setPointerCapture?.(e.pointerId);
 
-  const dx=e.clientX-lastX, dy=e.clientY-lastY;
-  if (Math.abs(dx)+Math.abs(dy)>4) pointerMoved=true;
+  if(mode!=="build")return;
 
-  if (mode==="camera") {
-    yaw -= dx*.008;
-    pitch = Math.max(.16,Math.min(1.3,pitch+dy*.006));
-  } else if (tool==="wall" && wallStart && wallPreview) {
+  if(tool==="select"){
+    pickObject(e.clientX,e.clientY);
+    return;
+  }
+
+  const p=groundPoint(e.clientX,e.clientY);
+  if(!p)return;
+
+  if(tool==="wall"){
+    wallStart=p;
+    wallPreview=makeWall(p,p,true);
+    scene.add(wallPreview);
+  }else if(tool==="door"||tool==="window"){
+    placeAttached(p,tool,true);
+  }else{
+    placeSimple(p,tool,true);
+  }
+},{passive:false});
+
+canvas.addEventListener("pointermove",e=>{
+  e.preventDefault();
+  if(!pointerDown)return;
+
+  const dx=e.clientX-lastX;
+  const dy=e.clientY-lastY;
+
+  if(mode==="camera"){
+    yaw-=dx*.008;
+    pitch=Math.max(.16,Math.min(1.3,pitch+dy*.006));
+  }else if(mode==="build"&&tool==="wall"&&wallStart&&wallPreview){
     const p=groundPoint(e.clientX,e.clientY);
-    if (p) {
+    if(p){
       scene.remove(wallPreview);
       wallPreview=makeWall(wallStart,p,true);
       scene.add(wallPreview);
     }
   }
 
-  lastX=e.clientX; lastY=e.clientY;
-}, {passive:false});
+  lastX=e.clientX;
+  lastY=e.clientY;
+},{passive:false});
 
-canvas.addEventListener("pointerup", e => {
+canvas.addEventListener("pointerup",e=>{
   e.preventDefault();
-  if (mode==="build" && tool==="wall" && wallStart) {
+
+  if(mode==="build"&&tool==="wall"&&wallStart){
     const p=groundPoint(e.clientX,e.clientY);
     removePreview();
-    if (p && Math.hypot(p.x-wallStart.x,p.z-wallStart.z)>=.5) {
-      addObject(makeWall(wallStart,p,false),"wall");
+    if(p&&Math.hypot(p.x-wallStart.x,p.z-wallStart.z)>=.5){
+      addObject(makeWall(wallStart,p,false),"wall",true);
     }
     wallStart=null;
   }
-  pointerDown=false;
-}, {passive:false});
 
-canvas.addEventListener("touchstart", e => {
-  if (e.touches.length===2) {
-    const [a,b]=e.touches;
+  pointerDown=false;
+},{passive:false});
+
+canvas.addEventListener("touchstart",e=>{
+  if(e.touches.length===2){
+    const[a,b]=e.touches;
     pinchStart=Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY);
   }
   e.preventDefault();
-}, {passive:false});
+},{passive:false});
 
-canvas.addEventListener("touchmove", e => {
-  if (e.touches.length===2) {
-    const [a,b]=e.touches;
+canvas.addEventListener("touchmove",e=>{
+  if(e.touches.length===2){
+    const[a,b]=e.touches;
     const d=Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY);
-    if (pinchStart!==null) distance=Math.max(7,Math.min(45,distance-(d-pinchStart)*.045));
+    if(pinchStart!==null){
+      distance=Math.max(7,Math.min(45,distance-(d-pinchStart)*.045));
+    }
     pinchStart=d;
   }
   e.preventDefault();
-}, {passive:false});
+},{passive:false});
 
-canvas.addEventListener("touchend", e => {
+canvas.addEventListener("touchend",e=>{
   pinchStart=null;
   e.preventDefault();
-}, {passive:false});
+},{passive:false});
 
-canvas.addEventListener("contextmenu", e => e.preventDefault());
+canvas.addEventListener("contextmenu",e=>e.preventDefault());
 
-function loop() {
+loadWorld();
+
+function loop(){
   updateCamera();
   renderer.render(scene,camera);
   requestAnimationFrame(loop);
 }
 loop();
 
-if ("serviceWorker" in navigator) {
+if("serviceWorker" in navigator){
   navigator.serviceWorker.register("./sw.js").catch(()=>{});
 }
 </script>
