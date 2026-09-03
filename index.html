@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#111827"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
-<title>億家設計遊戲 v4</title>
+<title>億家設計遊戲 v4.1</title>
 <link rel="manifest" href="./manifest.webmanifest"/>
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -45,7 +45,7 @@ body{touch-action:none;overscroll-behavior:none}
 <div id="crosshair"></div>
 
 <div class="top">
-  <div class="badge">億家設計遊戲 v4</div>
+  <div class="badge">億家設計遊戲 v4.1</div>
   <div id="modeBadge" class="badge">步行模式</div>
 </div>
 
@@ -60,7 +60,10 @@ body{touch-action:none;overscroll-behavior:none}
     <button id="jumpBtn" class="action circle">升/跳</button>
   </div>
   <button id="flyBtn" class="action">飛行模式</button>
-  <button id="placeBtn" class="action">施工 / 放置</button>
+  <button id="rangeBtn" class="action active">範圍建造</button>
+  <button id="placeBtn" class="action">設定起點</button>
+  <button id="confirmBtn" class="action" style="display:none;background:rgba(22,163,74,.92)">確認建造</button>
+  <button id="cancelBtn" class="action" style="display:none">取消範圍</button>
   <button id="removeBtn" class="action">拆除</button>
 </div>
 
@@ -95,6 +98,9 @@ const removeBtn=document.getElementById("removeBtn");
 const jumpBtn=document.getElementById("jumpBtn");
 const downBtn=document.getElementById("downBtn");
 const flyBtn=document.getElementById("flyBtn");
+const rangeBtn=document.getElementById("rangeBtn");
+const confirmBtn=document.getElementById("confirmBtn");
+const cancelBtn=document.getElementById("cancelBtn");
 const slots=[...document.querySelectorAll(".slot")];
 
 const renderer=new THREE.WebGLRenderer({canvas,antialias:true});
@@ -159,6 +165,10 @@ let moveX=0,moveY=0;
 let verticalInput=0;
 let selectedKind="foundation";
 let preview=null;
+let rangeMode=true;
+let rangeStart=null;
+let rangeEnd=null;
+let rangePreviewGroup=null;
 let lookPointer=null;
 let lookLastX=0,lookLastY=0;
 let joystickPointer=null;
@@ -288,7 +298,7 @@ function loadWorld(){
 }
 loadWorld();
 
-function snap(v){return Math.round(v*.5)*2}
+function snap(v){return Math.round(v)}
 
 function flatForward(){
   return new THREE.Vector3(-Math.sin(yaw),0,-Math.cos(yaw)).normalize();
@@ -336,21 +346,89 @@ function placement(){
   return {x:snap(p.x),z:snap(p.z)};
 }
 
-function ensurePreview(){
-  if(preview){scene.remove(preview);preview=null}
-  preview=createObject(selectedKind);
-  preview.traverse?.(c=>{
+function clearRangePreview(){
+  if(rangePreviewGroup){
+    scene.remove(rangePreviewGroup);
+    rangePreviewGroup=null;
+  }
+}
+
+function makeGhost(kind,x,z,ry=0){
+  const g=createObject(kind);
+  g.position.set(x,defaultY(kind),z);
+  g.rotation.y=ry;
+  g.traverse?.(c=>{
     if(c.isMesh){
       c.material=c.material.clone();
       c.material.transparent=true;
-      c.material.opacity=.42;
+      c.material.opacity=.35;
       c.material.depthWrite=false;
     }
   });
-  scene.add(preview);
+  return g;
+}
+
+function ensurePreview(){
+  if(preview){scene.remove(preview);preview=null}
+  clearRangePreview();
+  if(!rangeMode){
+    preview=createObject(selectedKind);
+    preview.traverse?.(c=>{
+      if(c.isMesh){
+        c.material=c.material.clone();
+        c.material.transparent=true;
+        c.material.opacity=.42;
+        c.material.depthWrite=false;
+      }
+    });
+    scene.add(preview);
+  }
+}
+
+function rangeCells(a,b){
+  const minX=Math.min(a.x,b.x), maxX=Math.max(a.x,b.x);
+  const minZ=Math.min(a.z,b.z), maxZ=Math.max(a.z,b.z);
+  const cells=[];
+  if(selectedKind==="foundation" || selectedKind==="slab" || selectedKind==="road"){
+    for(let x=minX;x<=maxX;x++){
+      for(let z=minZ;z<=maxZ;z++) cells.push({x,z,ry:0});
+    }
+  }else{
+    const dx=Math.abs(b.x-a.x), dz=Math.abs(b.z-a.z);
+    if(dx>=dz){
+      const z=a.z;
+      const from=Math.min(a.x,b.x), to=Math.max(a.x,b.x);
+      for(let x=from;x<=to;x++) cells.push({x,z,ry:0});
+    }else{
+      const x=a.x;
+      const from=Math.min(a.z,b.z), to=Math.max(a.z,b.z);
+      for(let z=from;z<=to;z++) cells.push({x,z,ry:Math.PI/2});
+    }
+  }
+  return cells;
+}
+
+function drawRangePreview(){
+  clearRangePreview();
+  if(!rangeStart || !rangeEnd)return;
+  rangePreviewGroup=new THREE.Group();
+  for(const c of rangeCells(rangeStart,rangeEnd)){
+    rangePreviewGroup.add(makeGhost(selectedKind,c.x,c.z,c.ry));
+  }
+  scene.add(rangePreviewGroup);
 }
 
 function updatePreview(){
+  if(rangeMode){
+    if(rangeStart){
+      const pl=placement();
+      if(pl){
+        rangeEnd=pl;
+        drawRangePreview();
+      }
+    }
+    return;
+  }
   if(!preview)return;
   const pl=placement();
   if(!pl){preview.visible=false;return}
@@ -364,14 +442,69 @@ function updatePreview(){
 slots.forEach(btn=>btn.addEventListener("click",()=>{
   selectedKind=btn.dataset.kind;
   slots.forEach(b=>b.classList.toggle("active",b===btn));
+  rangeStart=null;rangeEnd=null;
+  confirmBtn.style.display="none";
+  cancelBtn.style.display="none";
+  placeBtn.textContent=rangeMode?"設定起點":"施工 / 放置";
   ensurePreview();
 }));
 
 placeBtn.addEventListener("click",()=>{
   const pl=placement();
   if(!pl)return;
+
+  if(rangeMode){
+    if(!rangeStart){
+      rangeStart={x:pl.x,z:pl.z};
+      rangeEnd={x:pl.x,z:pl.z};
+      placeBtn.textContent="設定終點";
+      cancelBtn.style.display="block";
+      drawRangePreview();
+      return;
+    }
+    rangeEnd={x:pl.x,z:pl.z};
+    drawRangePreview();
+    confirmBtn.style.display="block";
+    placeBtn.textContent="重新設定終點";
+    return;
+  }
+
   const rot=Math.round(yaw/(Math.PI/2))*(Math.PI/2);
   addObject(selectedKind,pl.x,defaultY(selectedKind),pl.z,rot,true);
+});
+
+
+rangeBtn.addEventListener("click",()=>{
+  rangeMode=!rangeMode;
+  rangeBtn.classList.toggle("active",rangeMode);
+  rangeStart=null;rangeEnd=null;
+  confirmBtn.style.display="none";
+  cancelBtn.style.display="none";
+  placeBtn.textContent=rangeMode?"設定起點":"施工 / 放置";
+  ensurePreview();
+  modeBadge.textContent=rangeMode?"範圍建造模式":(flying?"飛行模式":"步行模式");
+});
+
+confirmBtn.addEventListener("click",()=>{
+  if(!rangeStart || !rangeEnd)return;
+  const cells=rangeCells(rangeStart,rangeEnd);
+  for(const c of cells){
+    addObject(selectedKind,c.x,defaultY(selectedKind),c.z,c.ry,false);
+  }
+  saveWorld();
+  rangeStart=null;rangeEnd=null;
+  clearRangePreview();
+  confirmBtn.style.display="none";
+  cancelBtn.style.display="none";
+  placeBtn.textContent="設定起點";
+});
+
+cancelBtn.addEventListener("click",()=>{
+  rangeStart=null;rangeEnd=null;
+  clearRangePreview();
+  confirmBtn.style.display="none";
+  cancelBtn.style.display="none";
+  placeBtn.textContent="設定起點";
 });
 
 removeBtn.addEventListener("click",()=>{
