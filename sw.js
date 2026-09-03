@@ -1,4 +1,4 @@
-const CACHE='yijia-v4-6-small-buttons-1';
+const CACHE='yijia-v4-7-range-fix-2';
 const ASSETS=['./','./index.html','./manifest.webmanifest'];
 self.addEventListener('install',e=>{
   self.skipWaiting();
