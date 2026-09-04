@@ -1,0 +1,361 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>MB 1843AE / O500 v4.1 重建驗收版</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#0d1115;color:#fff;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
+.badge{position:fixed;z-index:30;top:max(10px,env(safe-area-inset-top));left:max(12px,env(safe-area-inset-left));padding:9px 12px;border-radius:14px;background:#111b;border:1px solid #ffffff2b;backdrop-filter:blur(7px);font-size:12px;line-height:1.35}
+.help{position:fixed;z-index:30;top:max(10px,env(safe-area-inset-top));right:max(12px,env(safe-area-inset-right));padding:9px 12px;border-radius:14px;background:#111b;border:1px solid #ffffff2b;backdrop-filter:blur(7px);font-size:12px;text-align:right}
+.buttons{position:fixed;z-index:35;left:50%;transform:translateX(-50%);bottom:max(12px,env(safe-area-inset-bottom));display:flex;gap:8px;max-width:96vw;overflow:auto;padding:3px}
+button{white-space:nowrap;min-height:42px;border:1px solid #ffffff35;background:#111d;color:#fff;border-radius:13px;padding:8px 12px;font-weight:700}
+button.active{background:#f0ca00;color:#111}
+#loading{position:fixed;inset:0;z-index:100;background:#0b0e10;display:flex;align-items:center;justify-content:center;text-align:center}
+#rotate{display:none}
+@media(orientation:portrait) and (max-width:900px){
+#rotate{display:flex;position:fixed;inset:0;z-index:999;background:#07090af5;align-items:center;justify-content:center}
+}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="badge"><b>MB 1843AE / O500 v4.1</b><br>前擋＋左駕修正版</div>
+<div class="help">單指拖曳：旋轉<br>雙指：縮放／平移</div>
+<div class="buttons">
+  <button data-view="front" class="active">前方三分之二</button>
+  <button data-view="side">側面</button>
+  <button data-view="rear">車尾</button>
+  <button data-view="interior">車內</button>
+  <button data-view="cockpit">駕駛室</button>
+</div>
+<div id="loading"><div><b style="font-size:20px">v4.1 重建模型載入中</b><div style="margin-top:8px;color:#aaa;font-size:13px">這版不使用舊 bus.glb</div></div></div>
+<div id="rotate"><div style="padding:24px 30px;background:#171b1e;border:1px solid #ffffff24;border-radius:20px;text-align:center"><div style="font-size:50px">↻</div><b style="font-size:22px">請將手機橫向</b></div></div>
+
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/+esm"}}</script>
+<script type="module">
+import * as THREE from "three";
+import {OrbitControls} from "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/controls/OrbitControls.js";
+
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0xa9cee4);
+scene.fog=new THREE.Fog(0xa9cee4,55,150);
+
+const renderer=new THREE.WebGLRenderer({canvas:document.getElementById("c"),antialias:true,powerPreference:"high-performance"});
+renderer.setPixelRatio(Math.min(devicePixelRatio||1,2));
+renderer.shadowMap.enabled=true;
+renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+renderer.outputColorSpace=THREE.SRGBColorSpace;
+
+const camera=new THREE.PerspectiveCamera(46,innerWidth/innerHeight,.05,250);
+const controls=new OrbitControls(camera,renderer.domElement);
+controls.enableDamping=true; controls.dampingFactor=.075;
+controls.minDistance=2.0; controls.maxDistance=28;
+controls.target.set(0,1.75,0);
+
+scene.add(new THREE.HemisphereLight(0xffffff,0x66705c,2.3));
+const sun=new THREE.DirectionalLight(0xffffff,2.2);
+sun.position.set(-10,22,-12); sun.castShadow=true;
+sun.shadow.mapSize.set(2048,2048);
+scene.add(sun);
+
+const ground=new THREE.Mesh(new THREE.PlaneGeometry(150,150),new THREE.MeshStandardMaterial({color:0x778276,roughness:1}));
+ground.rotation.x=-Math.PI/2; ground.receiveShadow=true; scene.add(ground);
+const road=new THREE.Mesh(new THREE.PlaneGeometry(28,10),new THREE.MeshStandardMaterial({color:0x4d5155,roughness:1}));
+road.rotation.x=-Math.PI/2; road.position.y=.006; road.receiveShadow=true; scene.add(road);
+
+const bus=new THREE.Group(); scene.add(bus);
+
+const mat={
+ yellow:new THREE.MeshStandardMaterial({color:0xe0b900,metalness:.08,roughness:.48}),
+ yellow2:new THREE.MeshStandardMaterial({color:0xcda900,metalness:.06,roughness:.55}),
+ black:new THREE.MeshStandardMaterial({color:0x121416,roughness:.62}),
+ dark:new THREE.MeshStandardMaterial({color:0x20272b,roughness:.45}),
+ glass:new THREE.MeshPhysicalMaterial({color:0x7fb0c8,metalness:0,roughness:.05,transmission:.10,transparent:true,opacity:.72,side:THREE.DoubleSide}),
+ chrome:new THREE.MeshStandardMaterial({color:0xc8cdd0,metalness:.8,roughness:.25}),
+ white:new THREE.MeshStandardMaterial({color:0xf4f3df,emissive:0x77765e,emissiveIntensity:.3}),
+ red:new THREE.MeshStandardMaterial({color:0xb42320,emissive:0x5a0505,emissiveIntensity:.18}),
+ amber:new THREE.MeshStandardMaterial({color:0xf39a19,emissive:0x5f2600,emissiveIntensity:.14}),
+ seat:new THREE.MeshStandardMaterial({color:0x252b31,roughness:.8}),
+ seatBlue:new THREE.MeshStandardMaterial({color:0x526b78,roughness:.85}),
+ floor:new THREE.MeshStandardMaterial({color:0x3e4143,roughness:.95}),
+ trim:new THREE.MeshStandardMaterial({color:0x9ca2a5,metalness:.22,roughness:.5})
+};
+
+function mesh(geo,material,name){
+ const m=new THREE.Mesh(geo,material); m.name=name||""; m.castShadow=true; m.receiveShadow=true; bus.add(m); return m;
+}
+function box(name,sx,sy,sz,x,y,z,material=mat.yellow){
+ const m=mesh(new THREE.BoxGeometry(sx,sy,sz),material,name); m.position.set(x,y,z); return m;
+}
+function cyl(name,r,len,x,y,z,material=mat.black){
+ const m=mesh(new THREE.CylinderGeometry(r,r,len,36),material,name);
+ m.rotation.x=Math.PI/2; m.position.set(x,y,z); return m;
+}
+function quad(name,pts,material){
+ const g=new THREE.BufferGeometry();
+ const pos=new Float32Array([
+  ...pts[0],...pts[1],...pts[2],
+  ...pts[0],...pts[2],...pts[3]
+ ]);
+ g.setAttribute("position",new THREE.BufferAttribute(pos,3));
+ g.computeVertexNormals();
+ return mesh(g,material,name);
+}
+function prismSection(name,sections,material){
+ // section = {x, y0, y1, w0, w1}; octagonal coach cross-section.
+ const verts=[], faces=[], ring=[];
+ for(const s of sections){
+   const arr=[
+     [s.x,s.y0,-s.w0*.91],
+     [s.x,s.y0+.12,-s.w0],
+     [s.x,s.y1-.28,-s.w1],
+     [s.x,s.y1-.05,-s.w1*.92],
+     [s.x,s.y1, -s.w1*.70],
+     [s.x,s.y1,  s.w1*.70],
+     [s.x,s.y1-.05, s.w1*.92],
+     [s.x,s.y1-.28, s.w1],
+     [s.x,s.y0+.12, s.w0],
+     [s.x,s.y0, s.w0*.91]
+   ];
+   const ids=[];
+   for(const v of arr){ ids.push(verts.length/3); verts.push(...v); }
+   ring.push(ids);
+ }
+ for(let r=0;r<ring.length-1;r++){
+   const a=ring[r],b=ring[r+1];
+   for(let i=0;i<a.length;i++){
+     const j=(i+1)%a.length;
+     faces.push(a[i],a[j],b[j], a[i],b[j],b[i]);
+   }
+ }
+ // planar end caps, not a spherical nose
+ for(const ids of [ring[0],ring[ring.length-1]]){
+   const cx=sections[ids===ring[0]?0:sections.length-1].x;
+   let cy=0,cz=0;
+   for(const id of ids){ cy+=verts[id*3+1]; cz+=verts[id*3+2]; }
+   cy/=ids.length; cz/=ids.length;
+   const c=verts.length/3; verts.push(cx,cy,cz);
+   for(let i=0;i<ids.length;i++){
+     const j=(i+1)%ids.length;
+     if(ids===ring[0]) faces.push(c,ids[j],ids[i]); else faces.push(c,ids[i],ids[j]);
+   }
+ }
+ const g=new THREE.BufferGeometry();
+ g.setAttribute("position",new THREE.Float32BufferAttribute(verts,3));
+ g.setIndex(faces); g.computeVertexNormals();
+ return mesh(g,material,name);
+}
+
+// Dimensions follow the supplied 12.2m / 2.495m / 3.495m coach proportions.
+const shell=prismSection("coach_shell",[
+ {x:-6.10,y0:.42,y1:2.74,w0:1.04,w1:1.06}, // front bumper plane
+ {x:-5.92,y0:.42,y1:3.12,w0:1.16,w1:1.16},
+ {x:-5.55,y0:.42,y1:3.43,w0:1.235,w1:1.18},
+ {x:-4.95,y0:.42,y1:3.495,w0:1.247,w1:1.18},
+ {x: 4.75,y0:.42,y1:3.495,w0:1.247,w1:1.18},
+ {x: 5.45,y0:.45,y1:3.42,w0:1.235,w1:1.17},
+ {x: 5.92,y0:.48,y1:3.18,w0:1.18,w1:1.10},
+ {x: 6.10,y0:.55,y1:2.88,w0:1.08,w1:1.00}
+],mat.yellow);
+
+// Side window band and individual window mullions
+for(const side of [-1,1]){
+ const z=side*1.242;
+ const xs=[-4.80,-3.55,-2.30,-1.05,.20,1.45,2.70,3.95];
+ for(let i=0;i<xs.length;i++){
+   const w=i===0?1.02:1.12;
+   const x=xs[i];
+   quad(`window_${side}_${i}`,[
+    [x-w/2,1.93,z],[x+w/2,1.93,z],[x+w/2,3.18,z],[x-w/2,3.18,z]
+   ],mat.glass);
+ }
+ // top and bottom window rails
+ box(`rail_top_${side}`,9.9,.055,.035,-.1,3.20,z+side*.015,mat.black);
+ box(`rail_bottom_${side}`,9.9,.055,.035,-.1,1.91,z+side*.015,mat.black);
+}
+
+// Front windshield is rebuilt larger and more visible.
+quad("windshield_left",[
+ [-6.07,1.76,-1.06],[-6.07,1.76,-.05],[-5.60,3.18,-.06],[-5.60,3.18,-.96]
+],mat.glass);
+quad("windshield_right",[
+ [-6.07,1.76,.05],[-6.07,1.76,1.06],[-5.60,3.18,.96],[-5.60,3.18,.06]
+],mat.glass);
+box("windshield_center",.045,1.44,.07,-5.83,2.47,0,mat.black).rotation.z=-Math.atan2(.47,1.42);
+box("windshield_header",.12,.10,1.96,-5.60,3.23,0,mat.black);
+box("windshield_cowl",.10,.11,1.98,-6.08,1.73,0,mat.black);
+box("a_pillar_left",.40,.08,.08,-5.83,2.46,-1.05,mat.black).rotation.z=-Math.atan2(.47,1.42);
+box("a_pillar_right",.40,.08,.08,-5.83,2.46,1.05,mat.black).rotation.z=-Math.atan2(.47,1.42);
+box("wiper_left",.52,.018,.03,-5.93,1.93,-.46,mat.black).rotation.z=.38;
+box("wiper_right",.52,.018,.03,-5.93,1.93,.46,mat.black).rotation.z=-.38;
+
+// Front black brow / lower fascia
+quad("front_brow",[[-5.61,3.21,-.94],[-5.61,3.21,.94],[-5.52,3.40,.86],[-5.52,3.40,-.86]],mat.black);
+box("front_lower_black",.055,.46,1.76,-6.115,1.42,0,mat.dark);
+box("front_bumper",.09,.30,2.00,-6.13,.68,0,mat.yellow2);
+box("front_grille",.055,.23,1.05,-6.17,1.17,0,mat.black);
+for(let i=0;i<4;i++) box("grillebar"+i,.012,.022,.96,-6.202,1.09+i*.055,0,mat.chrome);
+
+// headlights, indicators, fog lamps
+for(const side of [-1,1]){
+ box("headlight"+side,.07,.20,.38,-6.17,.98,side*.68,mat.white);
+ box("indicator"+side,.073,.09,.25,-6.176,.84,side*.68,mat.amber);
+ const fog=cyl("fog"+side,.085,.06,-6.18,.65,side*.47,mat.white); fog.rotation.z=Math.PI/2;
+}
+
+// Mercedes-style center badge
+const starRing=mesh(new THREE.TorusGeometry(.15,.018,10,36),mat.chrome,"badge_ring");
+starRing.rotation.y=Math.PI/2; starRing.position.set(-6.19,1.31,0);
+for(let a=0;a<3;a++){
+ const spoke=box("badge_spoke"+a,.025,.22,.018,-6.225,1.31,0,mat.chrome);
+ spoke.rotation.x=a*Math.PI/3;
+}
+
+// Mirrors with proper arms
+for(const side of [-1,1]){
+ const arm=box("mirror_arm"+side,.55,.035,.035,-5.70,2.66,side*1.35,mat.black);
+ arm.rotation.z=-.22;
+ box("mirror"+side,.13,.38,.22,-5.49,2.55,side*1.48,mat.black);
+}
+
+// Right-hand passenger door, ahead of front axle
+const dz=-1.255;
+quad("door_glass",[[-5.25,1.48,dz],[-4.40,1.48,dz],[-4.40,2.95,dz],[-5.25,2.95,dz]],mat.glass);
+quad("door_lower",[[-5.25,.55,dz],[-4.40,.55,dz],[-4.40,1.48,dz],[-5.25,1.48,dz]],mat.yellow2);
+box("door_front_seal",.035,2.42,.03,-5.25,1.76,dz-.01,mat.black);
+box("door_rear_seal",.035,2.42,.03,-4.40,1.76,dz-.01,mat.black);
+
+// Luggage doors
+for(const side of [-1,1]){
+ const z=side*1.255;
+ const panels=[[-3.0,1.00],[-1.82,1.10],[-.55,1.10],[.72,1.10],[1.98,1.00]];
+ for(const [x,w] of panels){
+   quad("luggage",[[x-w/2,.74,z],[x+w/2,.74,z],[x+w/2,1.52,z],[x-w/2,1.52,z]],mat.yellow2);
+   box("luggage_handle",.10,.025,.022,x,1.22,z+side*.02,mat.black);
+ }
+}
+
+// Rear cooling details
+for(const side of [-1,1]){
+ const z=side*1.258;
+ box("side_engine_vent",.72,.78,.035,4.95,1.25,z,mat.dark);
+ for(let i=0;i<5;i++) box("ventbar",.58,.035,.018,4.95,.95+i*.11,z+side*.02,mat.chrome);
+}
+box("rear_grille",.07,.78,1.18,6.13,1.70,0,mat.dark);
+for(let i=0;i<5;i++) box("rearbar",.075,.035,1.02,6.17,1.45+i*.11,0,mat.chrome);
+for(const side of [-1,1]){
+ box("taillight",.075,.60,.15,6.16,1.08,side*.82,mat.red);
+ box("rear_indicator",.078,.12,.15,6.165,1.38,side*.82,mat.amber);
+}
+box("rear_bumper",.09,.28,1.98,6.15,.69,0,mat.yellow2);
+
+// Wheels: wheelbase 6.0 m, front overhang 2.67 m.
+for(const [x,label] of [[-3.43,"front"],[2.57,"rear"]]){
+ for(const side of [-1,1]){
+  const tyre=cyl(label+"_tyre",.515,.33,x,.53,side*1.23,mat.black);
+  const rim=cyl(label+"_rim",.265,.345,x,.53,side*1.235,mat.chrome);
+  const hub=cyl(label+"_hub",.10,.355,x,.53,side*1.24,mat.dark);
+ }
+}
+
+// Interior floor and front steps
+box("interior_floor",10.15,.10,1.82,.15,1.48,0,mat.floor);
+for(let i=0;i<4;i++){
+ box("step",.62,.12,.82,-4.95+i*.23,.45+i*.25,-.72,mat.trim);
+}
+
+// Seats, 2+2 aisle
+for(let row=0;row<9;row++){
+ const x=-3.25+row*.83;
+ for(const side of [-1,1]){
+  const z=side*.67;
+  box("seatbase",.50,.16,.48,x,1.66,z,mat.seat);
+  box("seatback",.18,.70,.53,x+.19,2.01,z,mat.seat);
+  box("headrest",.15,.22,.46,x+.20,2.41,z,mat.seat);
+  box("seatinsert",.035,.36,.30,x+.095,2.05,z,mat.seatBlue);
+  box("armrest",.30,.055,.055,x,1.88,side*.38,mat.black);
+ }
+}
+
+// overhead racks / center ceiling strip
+for(const side of [-1,1]){
+ box("rack",8.2,.18,.30,.35,3.00,side*.91,mat.trim);
+ box("led",8.0,.025,.035,.35,2.89,side*.69,mat.white);
+}
+box("ceiling_center",8.5,.08,.34,.2,3.30,0,mat.trim);
+
+// Cockpit - rebuilt as Taiwan left-hand-drive (driver on vehicle left = positive z)
+box("dash_main",.95,.64,1.92,-5.10,1.92,.00,mat.trim);
+box("dash_upper",.62,.16,1.46,-5.48,2.32,.18,mat.dark);
+quad("instrument_panel",[[-5.57,2.00,.22],[-5.57,2.00,.95],[-5.49,2.42,.92],[-5.49,2.42,.25]],mat.black);
+quad("switch_panel",[[-5.52,1.88,-.20],[-5.52,1.88,.28],[-5.47,2.28,.28],[-5.47,2.28,-.20]],mat.black);
+for(let r=0;r<3;r++) for(let c=0;c<4;c++) box("switch",.03,.08,.09,-5.50,1.98+r*.12,-.11+c*.12, r===1&&c===1?mat.red:mat.dark);
+box("driver_console",.54,.46,.40,-4.86,1.66,.34,mat.dark);
+box("ticket_panel",.24,.18,.34,-4.96,1.98,-.58,mat.dark);
+
+// steering wheel on left side
+const wheel=mesh(new THREE.TorusGeometry(.31,.038,10,40),mat.black,"steering");
+wheel.rotation.y=Math.PI/2; wheel.position.set(-5.30,2.03,.61);
+for(let a=0;a<3;a++){
+ const sp=box("steer_spoke",.025,.24,.036,-5.30,2.03,.61,mat.black);
+ sp.rotation.x=a*Math.PI/3;
+}
+box("steer_column",.22,.06,.06,-5.05,1.88,.52,mat.black).rotation.z=.55;
+
+// driver seat on left side
+const driverSeat=box("driver_base",.64,.18,.60,-4.76,1.64,.62,mat.seat);
+box("driver_back",.18,.78,.64,-4.54,2.02,.62,mat.seat);
+box("driver_headrest",.15,.22,.50,-4.52,2.44,.62,mat.seat);
+
+// GO240-8 selector + air parking brake
+const sel=box("selector_shaft",.04,.34,.04,-4.88,1.78,.16,mat.black); sel.rotation.z=-.18;
+const knob=mesh(new THREE.SphereGeometry(.085,18,12),mat.black,"selector_knob"); knob.position.set(-4.91,1.97,.16);
+const park=box("parking_brake",.04,.28,.04,-4.68,1.73,.12,mat.red); park.rotation.z=-.42;
+
+// extra cabin framing so the cockpit looks more complete
+box("left_a_trim",.08,2.10,.08,-5.28,1.82,1.03,mat.trim);
+box("right_partition",.08,1.75,.08,-4.18,1.66,-.96,mat.trim);
+box("dash_side_wall",.10,.78,.58,-4.72,1.56,.98,mat.trim);
+
+// subtle lower body stripe and side marker lamps
+for(const side of [-1,1]){
+ box("lower_stripe",10.6,.045,.025,.05,.64,side*1.26,mat.black);
+ for(const x of [-4.0,-2.2,-.4,1.4,3.2,4.7]) box("marker",.10,.055,.025,x,.92,side*1.27,mat.amber);
+}
+
+// Shadows
+bus.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true}});
+
+const views={
+ front:{p:[-10.8,4.7,-7.8],t:[0,1.65,0]},
+ side:{p:[0,3.9,-14.0],t:[0,1.65,0]},
+ rear:{p:[10.9,4.7,7.4],t:[.8,1.70,0]},
+ interior:{p:[-3.6,2.18,.03],t:[2.6,2.05,0]},
+ cockpit:{p:[-4.56,2.15,.82],t:[-5.95,2.02,.52]}
+};
+function setView(key){
+ const v=views[key]; camera.position.set(...v.p); controls.target.set(...v.t); controls.update();
+ document.querySelectorAll("button").forEach(b=>b.classList.toggle("active",b.dataset.view===key));
+}
+document.querySelectorAll("button[data-view]").forEach(b=>b.onclick=()=>setView(b.dataset.view));
+setView("front");
+
+function resize(){
+ renderer.setSize(innerWidth,innerHeight,false);
+ camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix();
+}
+addEventListener("resize",resize); resize();
+document.getElementById("loading").style.display="none";
+
+function animate(){
+ controls.update();
+ renderer.render(scene,camera);
+ requestAnimationFrame(animate);
+}
+animate();
+</script>
+</body>
+</html>
