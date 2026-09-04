@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<title>MB 1843AE v2.3</title>
+<title>MB 1843AE v2.4</title>
 <style>
 :root{
   --st:max(8px,env(safe-area-inset-top));
@@ -83,7 +83,7 @@ button.primary{background:#e0bd00e8;color:#111;font-weight:800}
   <button id="gasBtn" class="pedal gas">油門</button>
 </div>
 
-<div id="load"><div><b>MB 1843AE v2.3</b><div class="muted">載入畫面＋操作修正版…</div></div></div>
+<div id="load"><div><b>MB 1843AE v2.4</b><div class="muted">載入畫面＋操作修正版…</div></div></div>
 <div id="rotate"><div class="card"><div style="font-size:50px">↻</div><b style="font-size:22px">請把手機橫向</b></div></div>
 
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/+esm"}}</script>
@@ -311,7 +311,7 @@ function updateWalk(dt){
   const right = new THREE.Vector3(forward.z,0,-forward.x);
   const move = new THREE.Vector3();
   move.addScaledVector(right, -state.joyX);  // 左右修正
-  move.addScaledVector(forward, state.joyY); // 前後修正
+  move.addScaledVector(forward, -state.joyY); // 前後修正
   if(move.lengthSq() > 1) move.normalize();
   state.player.addScaledVector(move, 2.8 * dt);
 
