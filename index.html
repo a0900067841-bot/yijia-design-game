@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>MB 1843AE / O500 v3.0 展示版</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#0d0f11;color:#fff;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+#game{position:fixed;inset:0;width:100%;height:100%;display:block}
+.top{position:fixed;left:max(10px,env(safe-area-inset-left));right:max(10px,env(safe-area-inset-right));top:max(8px,env(safe-area-inset-top));z-index:20;display:flex;justify-content:space-between;gap:10px;pointer-events:none}
+.card{background:#000a;border:1px solid #ffffff2a;border-radius:14px;padding:8px 11px;font-size:12px;line-height:1.35;backdrop-filter:blur(6px)}
+.actions{position:fixed;right:max(12px,env(safe-area-inset-right));bottom:max(12px,env(safe-area-inset-bottom));z-index:30;display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+button{min-height:42px;border-radius:13px;border:1px solid #ffffff3c;background:#000b;color:#fff;padding:8px 12px;font-size:12px}
+button.primary{background:#e0bd00e8;color:#111;font-weight:800}
+#load{position:fixed;inset:0;z-index:100;background:#111;display:flex;align-items:center;justify-content:center;text-align:center}
+#load .muted{font-size:13px;color:#aaa;margin-top:8px}
+#rotate{display:none}
+@media(orientation:portrait) and (max-width:900px){
+ #rotate{display:flex;position:fixed;inset:0;z-index:999;background:#080808f2;align-items:center;justify-content:center;text-align:center}
+ .rotateCard{padding:26px;background:#1c1c1c;border:1px solid #ffffff22;border-radius:20px}
+}
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+<div class="top">
+  <div class="card"><b>MB 1843AE / O500 v3.0</b><br>整車重建展示版</div>
+  <div class="card" style="text-align:right">單指拖曳：旋轉<br>雙指：縮放／平移</div>
+</div>
+<div class="actions">
+  <button id="exterior" class="primary">外觀視角</button>
+  <button id="side">側面視角</button>
+  <button id="rear">車尾視角</button>
+  <button id="interior">車內視角</button>
+  <button id="cockpit">駕駛室</button>
+</div>
+<div id="load"><div><b>MB 1843AE / O500 v3.0</b><div class="muted">載入整車重建模型…</div></div></div>
+<div id="rotate"><div class="rotateCard"><div style="font-size:50px">↻</div><b style="font-size:22px">請把手機橫向</b></div></div>
+
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/+esm"}}</script>
+<script type="module">
+import * as THREE from "three";
+import {GLTFLoader} from "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/loaders/GLTFLoader.js";
+import {OrbitControls} from "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/controls/OrbitControls.js";
+
+const $=id=>document.getElementById(id);
+const renderer=new THREE.WebGLRenderer({canvas:$("game"),antialias:true,powerPreference:"high-performance"});
+renderer.setPixelRatio(Math.min(2,devicePixelRatio||1));
+renderer.shadowMap.enabled=true;
+renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0xa7cde5);
+scene.fog=new THREE.Fog(0xa7cde5,65,180);
+
+const camera=new THREE.PerspectiveCamera(52,innerWidth/innerHeight,.05,300);
+camera.position.set(10.8,5.0,8.4);
+
+scene.add(new THREE.HemisphereLight(0xffffff,0x617057,2.1));
+const sun=new THREE.DirectionalLight(0xffffff,2.3);
+sun.position.set(18,26,12);
+sun.castShadow=true;
+scene.add(sun);
+
+const ground=new THREE.Mesh(new THREE.PlaneGeometry(180,180),new THREE.MeshStandardMaterial({color:0x707b70,roughness:1}));
+ground.rotation.x=-Math.PI/2;
+ground.receiveShadow=true;
+scene.add(ground);
+
+const pad=new THREE.Mesh(new THREE.PlaneGeometry(28,12),new THREE.MeshStandardMaterial({color:0x4d5054,roughness:1}));
+pad.rotation.x=-Math.PI/2;
+pad.position.y=.01;
+scene.add(pad);
+
+const bus=(await new GLTFLoader().loadAsync("./bus.glb")).scene;
+scene.add(bus);
+bus.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true}});
+$("load").style.display="none";
+
+const controls=new OrbitControls(camera,renderer.domElement);
+controls.enableDamping=true;
+controls.dampingFactor=.08;
+controls.target.set(0,1.7,0);
+controls.minDistance=3.0;
+controls.maxDistance=26;
+controls.maxPolarAngle=Math.PI*.48;
+controls.minPolarAngle=.35;
+
+function view(pos,target){
+  camera.position.set(...pos);
+  controls.target.set(...target);
+  controls.update();
+}
+$("exterior").onclick=()=>view([10.8,5.0,8.4],[0,1.7,0]);
+$("side").onclick=()=>view([0,4.1,13.5],[0,1.7,0]);
+$("rear").onclick=()=>view([-10.6,4.6,7.7],[-1.2,1.8,0]);
+$("interior").onclick=()=>view([3.4,2.25,.15],[-2.0,2.1,0]);
+$("cockpit").onclick=()=>view([4.45,2.12,-.55],[6.0,2.05,-.1]);
+
+function resize(){
+  renderer.setSize(innerWidth,innerHeight,false);
+  camera.aspect=innerWidth/innerHeight;
+  camera.updateProjectionMatrix();
+}
+resize();
+addEventListener("resize",resize);
+
+function loop(){
+  controls.update();
+  renderer.render(scene,camera);
+  requestAnimationFrame(loop);
+}
+loop();
+</script>
+</body>
+</html>
