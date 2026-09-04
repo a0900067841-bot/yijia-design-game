@@ -1,9 +1,8 @@
-MB 1843AE v2.4 前後方向修正版
+MB 1843AE / O500 v3.0 整車重建展示版
 
-修正內容：
-- 搖桿往前/上 = 人物往前
-- 搖桿往後/下 = 人物往後
-- 左右方向保留正常設定
-- 畫面左右拖曳方向保留正常設定
+這版先不做駕駛操作，只用來確認整台車的外觀與內裝是否接近實車。
 
-部署：請把 index.html 與 bus.glb 一起覆蓋 GitHub Pages 根目錄。
+部署到 GitHub Pages：
+1. 把 index.html 和 bus.glb 一起放到 Repository 根目錄。
+2. Settings → Pages → Deploy from a branch → main → /(root)。
+3. 用 Safari 橫向開啟。

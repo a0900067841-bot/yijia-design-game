@@ -3,369 +3,115 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<title>MB 1843AE v2.4</title>
+<title>MB 1843AE / O500 v3.0 展示版</title>
 <style>
-:root{
-  --st:max(8px,env(safe-area-inset-top));
-  --sb:max(8px,env(safe-area-inset-bottom));
-  --sl:max(8px,env(safe-area-inset-left));
-  --sr:max(8px,env(safe-area-inset-right));
-}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#000;color:#fff;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;touch-action:none}
-canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
-.hud{position:fixed;top:var(--st);z-index:20;background:#0009;border:1px solid #ffffff2b;border-radius:14px;padding:8px 11px;font-size:12px;line-height:1.35;backdrop-filter:blur(6px)}
-.hud.left{left:var(--sl)}
-.hud.right{right:var(--sr);text-align:right}
-#hint{position:fixed;left:50%;top:calc(var(--st) + 2px);transform:translateX(-50%);z-index:21;background:#0009;border:1px solid #ffffff25;border-radius:999px;padding:7px 12px;font-size:11px;white-space:nowrap;pointer-events:none}
-#cross{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:10;color:#ffffff99;font-size:20px;pointer-events:none}
-
-#joy{position:fixed;left:calc(var(--sl) + 16px);bottom:calc(var(--sb) + 16px);width:124px;height:124px;border-radius:50%;background:#0005;border:2px solid #ffffff55;z-index:30;touch-action:none}
-#knob{position:absolute;left:34px;top:34px;width:52px;height:52px;border-radius:50%;background:#fffddd;border:2px solid #fff;box-shadow:0 4px 14px #0008}
-
-#actions{position:fixed;right:calc(var(--sr) + 12px);top:37%;transform:translateY(-50%);display:flex;flex-direction:column;gap:8px;z-index:30}
-button{min-height:42px;border-radius:13px;border:1px solid #ffffff44;background:#000a;color:#fff;padding:8px 12px;font-size:12px}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#0d0f11;color:#fff;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+#game{position:fixed;inset:0;width:100%;height:100%;display:block}
+.top{position:fixed;left:max(10px,env(safe-area-inset-left));right:max(10px,env(safe-area-inset-right));top:max(8px,env(safe-area-inset-top));z-index:20;display:flex;justify-content:space-between;gap:10px;pointer-events:none}
+.card{background:#000a;border:1px solid #ffffff2a;border-radius:14px;padding:8px 11px;font-size:12px;line-height:1.35;backdrop-filter:blur(6px)}
+.actions{position:fixed;right:max(12px,env(safe-area-inset-right));bottom:max(12px,env(safe-area-inset-bottom));z-index:30;display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+button{min-height:42px;border-radius:13px;border:1px solid #ffffff3c;background:#000b;color:#fff;padding:8px 12px;font-size:12px}
 button.primary{background:#e0bd00e8;color:#111;font-weight:800}
-.hidden{display:none !important}
-
-#drive{position:fixed;right:calc(var(--sr) + 12px);bottom:calc(var(--sb) + 12px);display:flex;align-items:flex-end;gap:8px;z-index:30}
-.pedal{width:66px;height:96px;border-radius:18px;font-weight:800}
-.gas{background:#d9bb00e8;color:#111}
-.brake{background:#8d2727e8}
-.steerRow{display:flex;gap:8px;margin-bottom:10px}
-.steer{width:54px;height:54px;border-radius:50%;font-size:21px;padding:0}
-
-#gears{position:fixed;left:50%;bottom:calc(var(--sb) + 12px);transform:translateX(-50%);display:flex;gap:8px;z-index:30}
-#gears button{min-width:58px}
-
-#load{position:fixed;inset:0;background:#111;z-index:100;display:flex;align-items:center;justify-content:center;text-align:center}
+#load{position:fixed;inset:0;z-index:100;background:#111;display:flex;align-items:center;justify-content:center;text-align:center}
 #load .muted{font-size:13px;color:#aaa;margin-top:8px}
-
 #rotate{display:none}
-@media (orientation:portrait) and (max-width:900px){
-  #rotate{display:flex;position:fixed;inset:0;z-index:999;background:#080808f2;align-items:center;justify-content:center;text-align:center}
-  #rotate .card{padding:26px;background:#1c1c1c;border-radius:20px;border:1px solid #ffffff22}
+@media(orientation:portrait) and (max-width:900px){
+ #rotate{display:flex;position:fixed;inset:0;z-index:999;background:#080808f2;align-items:center;justify-content:center;text-align:center}
+ .rotateCard{padding:26px;background:#1c1c1c;border:1px solid #ffffff22;border-radius:20px}
 }
 </style>
 </head>
 <body>
 <canvas id="game"></canvas>
-
-<div class="hud left"><b id="mode">步行模式</b><br><span id="status">左下搖桿移動，滑動畫面轉視角</span></div>
-<div class="hud right"><b id="speed">0 km/h</b><br><span id="gearText">N・手煞車 ON</span><br><span id="engineText">引擎 OFF</span></div>
-<div id="hint">方向已修正，先看車 → 開門 → 上車</div>
-<div id="cross">＋</div>
-
-<div id="joy"><div id="knob"></div></div>
-
-<div id="actions">
-  <button id="doorBtn" class="primary">開／關前門</button>
-  <button id="seatBtn">坐駕駛座</button>
-  <button id="startBtn" class="hidden">啟動引擎</button>
-  <button id="parkBtn" class="hidden">氣壓手煞車</button>
-  <button id="exitBtn" class="hidden">離開駕駛座</button>
-  <button id="resetBtn">重置位置</button>
+<div class="top">
+  <div class="card"><b>MB 1843AE / O500 v3.0</b><br>整車重建展示版</div>
+  <div class="card" style="text-align:right">單指拖曳：旋轉<br>雙指：縮放／平移</div>
 </div>
-
-<div id="gears" class="hidden">
-  <button id="gearDown">檔位 −</button>
-  <button id="gearUp">檔位 ＋</button>
+<div class="actions">
+  <button id="exterior" class="primary">外觀視角</button>
+  <button id="side">側面視角</button>
+  <button id="rear">車尾視角</button>
+  <button id="interior">車內視角</button>
+  <button id="cockpit">駕駛室</button>
 </div>
-
-<div id="drive" class="hidden">
-  <div>
-    <div class="steerRow">
-      <button id="steerL" class="steer">◀</button>
-      <button id="steerR" class="steer">▶</button>
-    </div>
-  </div>
-  <button id="brakeBtn" class="pedal brake">煞車</button>
-  <button id="gasBtn" class="pedal gas">油門</button>
-</div>
-
-<div id="load"><div><b>MB 1843AE v2.4</b><div class="muted">載入畫面＋操作修正版…</div></div></div>
-<div id="rotate"><div class="card"><div style="font-size:50px">↻</div><b style="font-size:22px">請把手機橫向</b></div></div>
+<div id="load"><div><b>MB 1843AE / O500 v3.0</b><div class="muted">載入整車重建模型…</div></div></div>
+<div id="rotate"><div class="rotateCard"><div style="font-size:50px">↻</div><b style="font-size:22px">請把手機橫向</b></div></div>
 
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/+esm"}}</script>
 <script type="module">
 import * as THREE from "three";
 import {GLTFLoader} from "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/loaders/GLTFLoader.js";
+import {OrbitControls} from "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/controls/OrbitControls.js";
 
 const $=id=>document.getElementById(id);
-const renderer = new THREE.WebGLRenderer({canvas:$("game"), antialias:true, powerPreference:"high-performance"});
-renderer.setPixelRatio(Math.min(2, devicePixelRatio || 1));
-renderer.shadowMap.enabled = true;
+const renderer=new THREE.WebGLRenderer({canvas:$("game"),antialias:true,powerPreference:"high-performance"});
+renderer.setPixelRatio(Math.min(2,devicePixelRatio||1));
+renderer.shadowMap.enabled=true;
+renderer.shadowMap.type=THREE.PCFSoftShadowMap;
 
-const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x9bc9e7);
-scene.fog = new THREE.Fog(0x9bc9e7, 65, 180);
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0xa7cde5);
+scene.fog=new THREE.Fog(0xa7cde5,65,180);
 
-const camera = new THREE.PerspectiveCamera(60, innerWidth/innerHeight, 0.05, 300);
+const camera=new THREE.PerspectiveCamera(52,innerWidth/innerHeight,.05,300);
+camera.position.set(10.8,5.0,8.4);
 
-scene.add(new THREE.HemisphereLight(0xffffff, 0x657458, 2.2));
-const sun = new THREE.DirectionalLight(0xffffff, 2.2);
-sun.position.set(16, 24, 12);
+scene.add(new THREE.HemisphereLight(0xffffff,0x617057,2.1));
+const sun=new THREE.DirectionalLight(0xffffff,2.3);
+sun.position.set(18,26,12);
+sun.castShadow=true;
 scene.add(sun);
 
-const ground = new THREE.Mesh(new THREE.PlaneGeometry(180,180), new THREE.MeshStandardMaterial({color:0x738b60}));
-ground.rotation.x = -Math.PI/2;
+const ground=new THREE.Mesh(new THREE.PlaneGeometry(180,180),new THREE.MeshStandardMaterial({color:0x707b70,roughness:1}));
+ground.rotation.x=-Math.PI/2;
+ground.receiveShadow=true;
 scene.add(ground);
 
-const road = new THREE.Mesh(new THREE.PlaneGeometry(120,22), new THREE.MeshStandardMaterial({color:0x46484d}));
-road.rotation.x = -Math.PI/2;
-road.position.y = 0.01;
-scene.add(road);
+const pad=new THREE.Mesh(new THREE.PlaneGeometry(28,12),new THREE.MeshStandardMaterial({color:0x4d5054,roughness:1}));
+pad.rotation.x=-Math.PI/2;
+pad.position.y=.01;
+scene.add(pad);
 
-for(let i=-8;i<=8;i++){
-  const line = new THREE.Mesh(new THREE.BoxGeometry(3.2,0.03,0.12), new THREE.MeshStandardMaterial({color:0xe7dc9c}));
-  line.position.set(i*6,0.03,-5.5);
-  scene.add(line);
+const bus=(await new GLTFLoader().loadAsync("./bus.glb")).scene;
+scene.add(bus);
+bus.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true}});
+$("load").style.display="none";
+
+const controls=new OrbitControls(camera,renderer.domElement);
+controls.enableDamping=true;
+controls.dampingFactor=.08;
+controls.target.set(0,1.7,0);
+controls.minDistance=3.0;
+controls.maxDistance=26;
+controls.maxPolarAngle=Math.PI*.48;
+controls.minPolarAngle=.35;
+
+function view(pos,target){
+  camera.position.set(...pos);
+  controls.target.set(...target);
+  controls.update();
 }
-
-let bus;
-let doorNodes = [];
-const doorClosed = [];
-const state = {
-  seated:false,
-  door:false,
-  engine:false,
-  park:true,
-  gear:0,
-  speed:0,
-  steer:0,
-  player:new THREE.Vector3(10.5,1.78,6.8),
-  yaw:-2.35,
-  pitch:-0.10,
-  joyX:0,
-  joyY:0,
-  gas:false,
-  brake:false,
-  steerL:false,
-  steerR:false,
-  last:performance.now()
-};
-const GN = ["N","1","2","3","4","5","6","7","8"];
+$("exterior").onclick=()=>view([10.8,5.0,8.4],[0,1.7,0]);
+$("side").onclick=()=>view([0,4.1,13.5],[0,1.7,0]);
+$("rear").onclick=()=>view([-10.6,4.6,7.7],[-1.2,1.8,0]);
+$("interior").onclick=()=>view([3.4,2.25,.15],[-2.0,2.1,0]);
+$("cockpit").onclick=()=>view([4.45,2.12,-.55],[6.0,2.05,-.1]);
 
 function resize(){
-  renderer.setSize(innerWidth, innerHeight, false);
-  camera.aspect = innerWidth/innerHeight;
+  renderer.setSize(innerWidth,innerHeight,false);
+  camera.aspect=innerWidth/innerHeight;
   camera.updateProjectionMatrix();
 }
 resize();
-addEventListener("resize", resize);
+addEventListener("resize",resize);
 
-bus = (await new GLTFLoader().loadAsync("./bus.glb")).scene;
-scene.add(bus);
-bus.traverse(obj=>{
-  if(obj.isMesh){
-    obj.castShadow = true;
-    obj.receiveShadow = true;
-  }
-  if(obj.name === "front_door" || obj.name === "front_door_glass"){
-    doorNodes.push(obj);
-    doorClosed.push(obj.position.clone());
-  }
-});
-$("load").style.display = "none";
-
-function ui(){
-  $("mode").textContent = state.seated ? "駕駛模式" : "步行模式";
-  $("speed").textContent = Math.round(state.speed) + " km/h";
-  $("gearText").textContent = GN[state.gear] + "・手煞車 " + (state.park ? "ON" : "OFF");
-  $("engineText").textContent = "引擎 " + (state.engine ? "ON" : "OFF");
-
-  if(state.seated){
-    $("status").textContent = state.engine ? "駕駛控制已啟用" : "請先啟動引擎";
-    $("hint").textContent = "啟動 → 放手煞車 → 進檔 → 油門";
-  } else {
-    $("status").textContent = state.door ? "前門已開，可上車" : "左下搖桿移動，滑動畫面轉視角";
-    $("hint").textContent = "方向與畫面已修正，可先繞車查看";
-  }
-
-  $("seatBtn").classList.toggle("hidden", state.seated);
-  $("startBtn").classList.toggle("hidden", !state.seated);
-  $("parkBtn").classList.toggle("hidden", !state.seated);
-  $("exitBtn").classList.toggle("hidden", !state.seated);
-  $("gears").classList.toggle("hidden", !state.seated);
-  $("drive").classList.toggle("hidden", !state.seated);
-}
-
-const joy = $("joy");
-const knob = $("knob");
-let joyPointer = null;
-
-function moveJoy(e){
-  const r = joy.getBoundingClientRect();
-  const cx = r.left + r.width/2;
-  const cy = r.top + r.height/2;
-  let dx = e.clientX - cx;
-  let dy = e.clientY - cy;
-  const max = r.width * 0.31;
-  const len = Math.hypot(dx,dy) || 1;
-  if(len > max){
-    dx *= max/len;
-    dy *= max/len;
-  }
-  state.joyX = dx/max;
-  state.joyY = dy/max;
-  knob.style.transform = `translate(${dx}px,${dy}px)`;
-}
-joy.addEventListener("pointerdown", e => {
-  joyPointer = e.pointerId;
-  joy.setPointerCapture(joyPointer);
-  moveJoy(e);
-});
-joy.addEventListener("pointermove", e => {
-  if(e.pointerId === joyPointer) moveJoy(e);
-});
-function stopJoy(e){
-  if(e.pointerId !== joyPointer) return;
-  joyPointer = null;
-  state.joyX = 0;
-  state.joyY = 0;
-  knob.style.transform = "translate(0,0)";
-}
-joy.addEventListener("pointerup", stopJoy);
-joy.addEventListener("pointercancel", stopJoy);
-
-let dragId = null;
-let lastX = 0;
-let lastY = 0;
-$("game").addEventListener("pointerdown", e => {
-  dragId = e.pointerId;
-  lastX = e.clientX;
-  lastY = e.clientY;
-  $("game").setPointerCapture(dragId);
-});
-$("game").addEventListener("pointermove", e => {
-  if(e.pointerId !== dragId) return;
-  const dx = e.clientX - lastX;
-  const dy = e.clientY - lastY;
-  lastX = e.clientX;
-  lastY = e.clientY;
-  state.yaw += dx * 0.005;     // 左滑往左，右滑往右
-  state.pitch = Math.max(-0.9, Math.min(0.65, state.pitch - dy * 0.004));
-});
-$("game").addEventListener("pointerup", e => {
-  if(e.pointerId === dragId) dragId = null;
-});
-$("game").addEventListener("pointercancel", e => {
-  if(e.pointerId === dragId) dragId = null;
-});
-
-function holdButton(id, key){
-  const el = $(id);
-  let pid = null;
-  el.addEventListener("pointerdown", e => {
-    pid = e.pointerId;
-    el.setPointerCapture(pid);
-    state[key] = true;
-  });
-  const off = e => {
-    if(e.pointerId !== pid) return;
-    pid = null;
-    state[key] = false;
-  };
-  el.addEventListener("pointerup", off);
-  el.addEventListener("pointercancel", off);
-}
-holdButton("gasBtn", "gas");
-holdButton("brakeBtn", "brake");
-holdButton("steerL", "steerL");
-holdButton("steerR", "steerR");
-
-$("doorBtn").onclick = () => { state.door = !state.door; };
-$("seatBtn").onclick = () => { if(state.door) state.seated = true; };
-$("startBtn").onclick = () => { state.engine = !state.engine; if(!state.engine) state.speed = 0; };
-$("parkBtn").onclick = () => { state.park = !state.park; };
-$("exitBtn").onclick = () => { state.seated = false; state.speed = 0; };
-$("gearUp").onclick = () => { state.gear = Math.min(8, state.gear + 1); };
-$("gearDown").onclick = () => { state.gear = Math.max(0, state.gear - 1); };
-$("resetBtn").onclick = () => {
-  state.seated = false;
-  state.engine = false;
-  state.park = true;
-  state.gear = 0;
-  state.speed = 0;
-  state.player.set(10.5,1.78,6.8);
-  state.yaw = -2.35;
-  state.pitch = -0.10;
-  bus.position.set(0,0,0);
-  bus.rotation.y = 0;
-};
-
-function updateDoor(){
-  for(let i=0;i<doorNodes.length;i++){
-    const base = doorClosed[i];
-    const mesh = doorNodes[i];
-    if(state.door){
-      mesh.position.set(base.x + 0.02, base.y, base.z + 0.34);
-    }else{
-      mesh.position.copy(base);
-    }
-  }
-}
-
-function updateWalk(dt){
-  const forward = new THREE.Vector3(Math.sin(state.yaw),0,-Math.cos(state.yaw));
-  const right = new THREE.Vector3(forward.z,0,-forward.x);
-  const move = new THREE.Vector3();
-  move.addScaledVector(right, -state.joyX);  // 左右修正
-  move.addScaledVector(forward, -state.joyY); // 前後修正
-  if(move.lengthSq() > 1) move.normalize();
-  state.player.addScaledVector(move, 2.8 * dt);
-
-  // simple boundaries so camera won't drift too far
-  state.player.x = Math.max(-30, Math.min(30, state.player.x));
-  state.player.z = Math.max(-20, Math.min(20, state.player.z));
-
-  camera.position.lerp(state.player, 0.18);
-  const dir = new THREE.Vector3(
-    Math.sin(state.yaw) * Math.cos(state.pitch),
-    Math.sin(state.pitch),
-    -Math.cos(state.yaw) * Math.cos(state.pitch)
-  );
-  camera.lookAt(camera.position.clone().add(dir));
-}
-
-function updateDrive(dt){
-  const targetSteer = state.steerL ? 0.55 : state.steerR ? -0.55 : 0;
-  state.steer += (targetSteer - state.steer) * Math.min(1, dt * 5);
-
-  if(state.engine && !state.park && state.gear > 0 && state.gas){
-    state.speed += 12.5 * (1 - (state.gear - 1) * 0.055) * dt;
-  }
-  if(state.brake) state.speed -= 35 * dt;
-  if(state.park) state.speed -= 48 * dt;
-  if(!state.gas) state.speed -= 2.2 * dt;
-
-  state.speed = Math.max(0, Math.min(120, state.speed));
-
-  if(state.speed > 0.01){
-    const v = state.speed / 3.6;
-    bus.rotation.y += state.steer * v * dt * 0.038;
-    bus.position.x += Math.cos(bus.rotation.y) * v * dt;
-    bus.position.z += Math.sin(bus.rotation.y) * v * dt;
-  }
-
-  bus.updateMatrixWorld(true);
-  const seatPos = new THREE.Vector3(4.45, 2.1, -0.58).applyMatrix4(bus.matrixWorld);
-  const fwd = new THREE.Vector3(1,0,0).applyQuaternion(bus.quaternion);
-  camera.position.lerp(seatPos, 0.22);
-  camera.lookAt(seatPos.clone().add(fwd.multiplyScalar(16)));
-}
-
-function loop(t){
-  const dt = Math.min(0.033, (t - state.last)/1000);
-  state.last = t;
-  updateDoor();
-  if(state.seated) updateDrive(dt); else updateWalk(dt);
-  ui();
-  renderer.render(scene, camera);
+function loop(){
+  controls.update();
+  renderer.render(scene,camera);
   requestAnimationFrame(loop);
 }
-ui();
-requestAnimationFrame(t => { state.last = t; requestAnimationFrame(loop); });
+loop();
 </script>
 </body>
 </html>
