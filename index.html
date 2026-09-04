@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<title>MB 1843AE / O500 v4.2 重建驗收版</title>
+<title>MB 1843AE / O500 v4.3 視角與駕駛室修正版</title>
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#0d1115;color:#fff;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
@@ -22,8 +22,8 @@ button.active{background:#f0ca00;color:#111}
 </head>
 <body>
 <canvas id="c"></canvas>
-<div class="badge"><b>MB 1843AE / O500 v4.2</b><br>前擋與左駕駕駛室重建版</div>
-<div class="help">單指拖曳：旋轉<br>雙指：縮放／平移</div>
+<div class="badge"><b>MB 1843AE / O500 v4.3</b><br>視角重設＋前擋／左駕再修正版</div>
+<div class="help">單指拖曳：旋轉<br>雙指：縮放<br>點下方按鈕可重設視角</div>
 <div class="buttons">
   <button data-view="front" class="active">前方三分之二</button>
   <button data-view="side">側面</button>
@@ -31,7 +31,7 @@ button.active{background:#f0ca00;color:#111}
   <button data-view="interior">車內</button>
   <button data-view="cockpit">駕駛室</button>
 </div>
-<div id="loading"><div><b style="font-size:20px">v4.2 重建模型載入中</b><div style="margin-top:8px;color:#aaa;font-size:13px">這版不使用舊 bus.glb</div></div></div>
+<div id="loading"><div><b style="font-size:20px">v4.3 模型載入中</b><div style="margin-top:8px;color:#aaa;font-size:13px">這版重修視角與左駕駕駛室</div></div></div>
 <div id="rotate"><div style="padding:24px 30px;background:#171b1e;border:1px solid #ffffff24;border-radius:20px;text-align:center"><div style="font-size:50px">↻</div><b style="font-size:22px">請將手機橫向</b></div></div>
 
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/+esm"}}</script>
@@ -52,7 +52,11 @@ renderer.outputColorSpace=THREE.SRGBColorSpace;
 const camera=new THREE.PerspectiveCamera(46,innerWidth/innerHeight,.05,250);
 const controls=new OrbitControls(camera,renderer.domElement);
 controls.enableDamping=true; controls.dampingFactor=.075;
-controls.minDistance=2.0; controls.maxDistance=28;
+controls.enablePan=false;
+controls.rotateSpeed=.85;
+controls.zoomSpeed=.95;
+controls.minDistance=3.0; controls.maxDistance=28;
+controls.maxPolarAngle=Math.PI*0.495;
 controls.target.set(0,1.75,0);
 
 scene.add(new THREE.HemisphereLight(0xffffff,0x66705c,2.3));
@@ -73,7 +77,7 @@ const mat={
  yellow2:new THREE.MeshStandardMaterial({color:0xcda900,metalness:.06,roughness:.55}),
  black:new THREE.MeshStandardMaterial({color:0x121416,roughness:.62}),
  dark:new THREE.MeshStandardMaterial({color:0x20272b,roughness:.45}),
- glass:new THREE.MeshPhysicalMaterial({color:0x9fd4e9,metalness:0,roughness:.03,transmission:.20,transparent:true,opacity:.58,side:THREE.DoubleSide}),
+ glass:new THREE.MeshPhysicalMaterial({color:0xa8d9eb,metalness:0,roughness:.03,transmission:.28,transparent:true,opacity:.52,side:THREE.DoubleSide}),
  chrome:new THREE.MeshStandardMaterial({color:0xc8cdd0,metalness:.8,roughness:.25}),
  white:new THREE.MeshStandardMaterial({color:0xf4f3df,emissive:0x77765e,emissiveIntensity:.3}),
  red:new THREE.MeshStandardMaterial({color:0xb42320,emissive:0x5a0505,emissiveIntensity:.18}),
@@ -293,6 +297,7 @@ box("ceiling_center",8.5,.08,.34,.2,3.30,0,mat.trim);
 box("dash_main",1.10,.66,1.98,-5.08,1.92,.06,mat.trim);
 box("dash_top",.72,.12,1.64,-5.50,2.33,.18,mat.dark);
 box("dash_mid",.42,.28,.86,-5.36,2.05,.62,mat.dark);
+box("cluster_hood",.18,.16,.54,-5.34,2.26,.73,mat.black);
 quad("instrument_panel",[[-5.57,1.99,.34],[-5.57,1.99,1.02],[-5.47,2.43,.93],[-5.47,2.43,.42]],mat.black);
 quad("switch_panel",[[-5.51,1.86,-.20],[-5.51,1.86,.32],[-5.45,2.22,.28],[-5.45,2.22,-.12]],mat.black);
 for(let r=0;r<3;r++) for(let c=0;c<4;c++) box("switch",.03,.07,.08,-5.47,1.95+r*.11,-.10+c*.11, r===1&&c===1?mat.red:mat.dark);
@@ -303,12 +308,12 @@ box("radio_stack",.18,.36,.20,-4.95,1.80,-.10,mat.dark);
 
 // steering wheel on left side, larger and higher
 const wheel=mesh(new THREE.TorusGeometry(.34,.040,12,42),mat.black,"steering");
-wheel.rotation.y=Math.PI/2; wheel.position.set(-5.24,2.05,.79);
+wheel.rotation.y=Math.PI/2; wheel.position.set(-5.22,2.06,.82);
 for(let a=0;a<3;a++){
  const sp=box("steer_spoke",.028,.26,.040,-5.24,2.05,.79,mat.black);
  sp.rotation.x=a*Math.PI/3;
 }
-box("steer_column",.30,.07,.07,-5.00,1.90,.67,mat.black).rotation.z=.58;
+box("steer_column",.34,.07,.07,-5.00,1.91,.70,mat.black).rotation.z=.60;
 
 // driver seat on left side
 const driverSeat=box("driver_base",.66,.19,.62,-4.70,1.64,.77,mat.seat);
@@ -343,17 +348,26 @@ for(const side of [-1,1]){
 bus.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true}});
 
 const views={
- front:{p:[-8.8,3.8,-4.9],t:[-3.0,1.72,0]},
- side:{p:[0,3.9,-14.0],t:[0,1.65,0]},
- rear:{p:[10.9,4.7,7.4],t:[.8,1.70,0]},
- interior:{p:[-3.2,2.14,.02],t:[2.8,2.00,0]},
- cockpit:{p:[-3.95,2.20,-.12],t:[-5.30,2.00,.74]}
+ front:{p:[-10.6,3.95,-7.0],t:[-5.15,2.18,0],min:6,max:24},
+ side:{p:[0.25,3.55,-15.6],t:[0.0,1.82,0],min:6,max:24},
+ rear:{p:[11.6,4.15,6.6],t:[5.7,1.92,0],min:6,max:24},
+ interior:{p:[2.8,2.15,0],t:[-4.2,2.00,0],min:1.2,max:10},
+ cockpit:{p:[-3.85,2.10,-0.18],t:[-5.22,2.02,0.74],min:0.9,max:7}
 };
 function setView(key){
- const v=views[key]; camera.position.set(...v.p); controls.target.set(...v.t); controls.update();
- document.querySelectorAll("button").forEach(b=>b.classList.toggle("active",b.dataset.view===key));
+ const v=views[key];
+ camera.position.set(...v.p);
+ controls.target.set(...v.t);
+ controls.minDistance=v.min; controls.maxDistance=v.max;
+ controls.update();
+ camera.lookAt(...v.t);
+ document.querySelectorAll("button[data-view]").forEach(b=>b.classList.toggle("active",b.dataset.view===key));
 }
-document.querySelectorAll("button[data-view]").forEach(b=>b.onclick=()=>setView(b.dataset.view));
+document.querySelectorAll("button[data-view]").forEach(b=>{
+ const fire=(e)=>{e.preventDefault(); setView(b.dataset.view);};
+ b.addEventListener('click',fire,{passive:false});
+ b.addEventListener('touchstart',fire,{passive:false});
+});
 setView("front");
 
 function resize(){
