@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<title>MB 1843AE / O500 v4.1 重建驗收版</title>
+<title>MB 1843AE / O500 v4.2 重建驗收版</title>
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#0d1115;color:#fff;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
@@ -22,7 +22,7 @@ button.active{background:#f0ca00;color:#111}
 </head>
 <body>
 <canvas id="c"></canvas>
-<div class="badge"><b>MB 1843AE / O500 v4.1</b><br>前擋＋左駕修正版</div>
+<div class="badge"><b>MB 1843AE / O500 v4.2</b><br>前擋與左駕駕駛室重建版</div>
 <div class="help">單指拖曳：旋轉<br>雙指：縮放／平移</div>
 <div class="buttons">
   <button data-view="front" class="active">前方三分之二</button>
@@ -31,7 +31,7 @@ button.active{background:#f0ca00;color:#111}
   <button data-view="interior">車內</button>
   <button data-view="cockpit">駕駛室</button>
 </div>
-<div id="loading"><div><b style="font-size:20px">v4.1 重建模型載入中</b><div style="margin-top:8px;color:#aaa;font-size:13px">這版不使用舊 bus.glb</div></div></div>
+<div id="loading"><div><b style="font-size:20px">v4.2 重建模型載入中</b><div style="margin-top:8px;color:#aaa;font-size:13px">這版不使用舊 bus.glb</div></div></div>
 <div id="rotate"><div style="padding:24px 30px;background:#171b1e;border:1px solid #ffffff24;border-radius:20px;text-align:center"><div style="font-size:50px">↻</div><b style="font-size:22px">請將手機橫向</b></div></div>
 
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/+esm"}}</script>
@@ -73,7 +73,7 @@ const mat={
  yellow2:new THREE.MeshStandardMaterial({color:0xcda900,metalness:.06,roughness:.55}),
  black:new THREE.MeshStandardMaterial({color:0x121416,roughness:.62}),
  dark:new THREE.MeshStandardMaterial({color:0x20272b,roughness:.45}),
- glass:new THREE.MeshPhysicalMaterial({color:0x7fb0c8,metalness:0,roughness:.05,transmission:.10,transparent:true,opacity:.72,side:THREE.DoubleSide}),
+ glass:new THREE.MeshPhysicalMaterial({color:0x9fd4e9,metalness:0,roughness:.03,transmission:.20,transparent:true,opacity:.58,side:THREE.DoubleSide}),
  chrome:new THREE.MeshStandardMaterial({color:0xc8cdd0,metalness:.8,roughness:.25}),
  white:new THREE.MeshStandardMaterial({color:0xf4f3df,emissive:0x77765e,emissiveIntensity:.3}),
  red:new THREE.MeshStandardMaterial({color:0xb42320,emissive:0x5a0505,emissiveIntensity:.18}),
@@ -177,20 +177,22 @@ for(const side of [-1,1]){
  box(`rail_bottom_${side}`,9.9,.055,.035,-.1,1.91,z+side*.015,mat.black);
 }
 
-// Front windshield is rebuilt larger and more visible.
+// Front windshield rebuilt again to read clearly from outside.
 quad("windshield_left",[
- [-6.07,1.76,-1.06],[-6.07,1.76,-.05],[-5.60,3.18,-.06],[-5.60,3.18,-.96]
+ [-6.10,1.73,-1.09],[-6.10,1.73,-.05],[-5.50,3.24,-.10],[-5.50,3.24,-1.00]
 ],mat.glass);
 quad("windshield_right",[
- [-6.07,1.76,.05],[-6.07,1.76,1.06],[-5.60,3.18,.96],[-5.60,3.18,.06]
+ [-6.10,1.73,.05],[-6.10,1.73,1.09],[-5.50,3.24,1.00],[-5.50,3.24,.10]
 ],mat.glass);
-box("windshield_center",.045,1.44,.07,-5.83,2.47,0,mat.black).rotation.z=-Math.atan2(.47,1.42);
-box("windshield_header",.12,.10,1.96,-5.60,3.23,0,mat.black);
-box("windshield_cowl",.10,.11,1.98,-6.08,1.73,0,mat.black);
-box("a_pillar_left",.40,.08,.08,-5.83,2.46,-1.05,mat.black).rotation.z=-Math.atan2(.47,1.42);
-box("a_pillar_right",.40,.08,.08,-5.83,2.46,1.05,mat.black).rotation.z=-Math.atan2(.47,1.42);
-box("wiper_left",.52,.018,.03,-5.93,1.93,-.46,mat.black).rotation.z=.38;
-box("wiper_right",.52,.018,.03,-5.93,1.93,.46,mat.black).rotation.z=-.38;
+box("windshield_center",.06,1.56,.09,-5.79,2.50,0,mat.black).rotation.z=-Math.atan2(.60,1.50);
+box("windshield_header",.12,.12,2.12,-5.49,3.25,0,mat.black);
+box("windshield_cowl",.10,.12,2.16,-6.11,1.71,0,mat.black);
+box("a_pillar_left",.56,.09,.09,-5.80,2.48,-1.08,mat.black).rotation.z=-Math.atan2(.60,1.50);
+box("a_pillar_right",.56,.09,.09,-5.80,2.48,1.08,mat.black).rotation.z=-Math.atan2(.60,1.50);
+box("windshield_outer_left",.06,1.47,.06,-6.02,2.47,-1.12,mat.black).rotation.z=-Math.atan2(.60,1.50);
+box("windshield_outer_right",.06,1.47,.06,-6.02,2.47,1.12,mat.black).rotation.z=-Math.atan2(.60,1.50);
+box("wiper_left",.68,.020,.032,-5.95,1.92,-.42,mat.black).rotation.z=.42;
+box("wiper_right",.68,.020,.032,-5.95,1.92,.42,mat.black).rotation.z=-.42;
 
 // Front black brow / lower fascia
 quad("front_brow",[[-5.61,3.21,-.94],[-5.61,3.21,.94],[-5.52,3.40,.86],[-5.52,3.40,-.86]],mat.black);
@@ -287,38 +289,49 @@ for(const side of [-1,1]){
 }
 box("ceiling_center",8.5,.08,.34,.2,3.30,0,mat.trim);
 
-// Cockpit - rebuilt as Taiwan left-hand-drive (driver on vehicle left = positive z)
-box("dash_main",.95,.64,1.92,-5.10,1.92,.00,mat.trim);
-box("dash_upper",.62,.16,1.46,-5.48,2.32,.18,mat.dark);
-quad("instrument_panel",[[-5.57,2.00,.22],[-5.57,2.00,.95],[-5.49,2.42,.92],[-5.49,2.42,.25]],mat.black);
-quad("switch_panel",[[-5.52,1.88,-.20],[-5.52,1.88,.28],[-5.47,2.28,.28],[-5.47,2.28,-.20]],mat.black);
-for(let r=0;r<3;r++) for(let c=0;c<4;c++) box("switch",.03,.08,.09,-5.50,1.98+r*.12,-.11+c*.12, r===1&&c===1?mat.red:mat.dark);
-box("driver_console",.54,.46,.40,-4.86,1.66,.34,mat.dark);
-box("ticket_panel",.24,.18,.34,-4.96,1.98,-.58,mat.dark);
+// Cockpit rebuilt again: Taiwan left-hand-drive and more visible from cockpit view.
+box("dash_main",1.10,.66,1.98,-5.08,1.92,.06,mat.trim);
+box("dash_top",.72,.12,1.64,-5.50,2.33,.18,mat.dark);
+box("dash_mid",.42,.28,.86,-5.36,2.05,.62,mat.dark);
+quad("instrument_panel",[[-5.57,1.99,.34],[-5.57,1.99,1.02],[-5.47,2.43,.93],[-5.47,2.43,.42]],mat.black);
+quad("switch_panel",[[-5.51,1.86,-.20],[-5.51,1.86,.32],[-5.45,2.22,.28],[-5.45,2.22,-.12]],mat.black);
+for(let r=0;r<3;r++) for(let c=0;c<4;c++) box("switch",.03,.07,.08,-5.47,1.95+r*.11,-.10+c*.11, r===1&&c===1?mat.red:mat.dark);
+box("driver_console",.78,.52,.46,-4.88,1.64,.44,mat.dark);
+box("left_dash_side",.22,.50,.52,-4.85,1.74,1.00,mat.dark);
+box("ticket_panel",.36,.20,.46,-4.88,1.96,-.58,mat.dark);
+box("radio_stack",.18,.36,.20,-4.95,1.80,-.10,mat.dark);
 
-// steering wheel on left side
-const wheel=mesh(new THREE.TorusGeometry(.31,.038,10,40),mat.black,"steering");
-wheel.rotation.y=Math.PI/2; wheel.position.set(-5.30,2.03,.61);
+// steering wheel on left side, larger and higher
+const wheel=mesh(new THREE.TorusGeometry(.34,.040,12,42),mat.black,"steering");
+wheel.rotation.y=Math.PI/2; wheel.position.set(-5.24,2.05,.79);
 for(let a=0;a<3;a++){
- const sp=box("steer_spoke",.025,.24,.036,-5.30,2.03,.61,mat.black);
+ const sp=box("steer_spoke",.028,.26,.040,-5.24,2.05,.79,mat.black);
  sp.rotation.x=a*Math.PI/3;
 }
-box("steer_column",.22,.06,.06,-5.05,1.88,.52,mat.black).rotation.z=.55;
+box("steer_column",.30,.07,.07,-5.00,1.90,.67,mat.black).rotation.z=.58;
 
 // driver seat on left side
-const driverSeat=box("driver_base",.64,.18,.60,-4.76,1.64,.62,mat.seat);
-box("driver_back",.18,.78,.64,-4.54,2.02,.62,mat.seat);
-box("driver_headrest",.15,.22,.50,-4.52,2.44,.62,mat.seat);
+const driverSeat=box("driver_base",.66,.19,.62,-4.70,1.64,.77,mat.seat);
+box("driver_back",.18,.84,.68,-4.46,2.03,.77,mat.seat);
+box("driver_headrest",.16,.24,.50,-4.43,2.48,.77,mat.seat);
+box("driver_armrest",.24,.06,.06,-4.70,1.92,.43,mat.black);
+
+// guide seat / partition next to door
+box("guide_seat_base",.42,.14,.38,-4.32,1.62,-.55,mat.seat);
+box("guide_seat_back",.14,.60,.42,-4.18,1.93,-.55,mat.seat);
+box("partition_panel",.06,1.20,.68,-4.10,1.74,-.28,mat.trim);
+box("grab_pole",.04,1.48,.04,-4.08,1.96,-.85,mat.chrome);
 
 // GO240-8 selector + air parking brake
-const sel=box("selector_shaft",.04,.34,.04,-4.88,1.78,.16,mat.black); sel.rotation.z=-.18;
-const knob=mesh(new THREE.SphereGeometry(.085,18,12),mat.black,"selector_knob"); knob.position.set(-4.91,1.97,.16);
-const park=box("parking_brake",.04,.28,.04,-4.68,1.73,.12,mat.red); park.rotation.z=-.42;
+const sel=box("selector_shaft",.04,.36,.04,-4.78,1.80,.18,mat.black); sel.rotation.z=-.18;
+const knob=mesh(new THREE.SphereGeometry(.09,20,14),mat.black,"selector_knob"); knob.position.set(-4.81,2.01,.18);
+const park=box("parking_brake",.05,.30,.05,-4.60,1.74,.18,mat.red); park.rotation.z=-.46;
 
-// extra cabin framing so the cockpit looks more complete
-box("left_a_trim",.08,2.10,.08,-5.28,1.82,1.03,mat.trim);
-box("right_partition",.08,1.75,.08,-4.18,1.66,-.96,mat.trim);
-box("dash_side_wall",.10,.78,.58,-4.72,1.56,.98,mat.trim);
+// driver side framing and front screen surround
+box("left_a_trim",.08,2.18,.08,-5.26,1.84,1.03,mat.trim);
+box("right_partition",.08,1.82,.08,-4.18,1.70,-.98,mat.trim);
+box("dash_side_wall",.12,.84,.64,-4.70,1.58,1.00,mat.trim);
+box("screen_rail",.08,.08,2.02,-5.32,2.78,0,mat.trim);
 
 // subtle lower body stripe and side marker lamps
 for(const side of [-1,1]){
@@ -330,11 +343,11 @@ for(const side of [-1,1]){
 bus.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true}});
 
 const views={
- front:{p:[-10.8,4.7,-7.8],t:[0,1.65,0]},
+ front:{p:[-8.8,3.8,-4.9],t:[-3.0,1.72,0]},
  side:{p:[0,3.9,-14.0],t:[0,1.65,0]},
  rear:{p:[10.9,4.7,7.4],t:[.8,1.70,0]},
- interior:{p:[-3.6,2.18,.03],t:[2.6,2.05,0]},
- cockpit:{p:[-4.56,2.15,.82],t:[-5.95,2.02,.52]}
+ interior:{p:[-3.2,2.14,.02],t:[2.8,2.00,0]},
+ cockpit:{p:[-3.95,2.20,-.12],t:[-5.30,2.00,.74]}
 };
 function setView(key){
  const v=views[key]; camera.position.set(...v.p); controls.target.set(...v.t); controls.update();
