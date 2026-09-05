@@ -1,75 +1,206 @@
-<!doctype html><html lang="zh-Hant"><head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<title>MB1843AE 3D駕駛核心版</title>
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>MB 1843AE / O500 第3.1階段 3D駕駛強化版</title>
 <style>
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#080b0f;color:#fff;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
-#app{position:fixed;inset:0;display:grid;grid-template-columns:92px 1fr 208px;grid-template-rows:1fr 56px}
-aside{background:#0a0f14ee;border-color:#ffffff20;z-index:20}#left{grid-row:1/3;border-right:1px solid #ffffff20;padding:9px 7px}#right{grid-row:1/3;border-left:1px solid #ffffff20;padding:9px;overflow:auto}
-#main{position:relative;overflow:hidden}#c{width:100%;height:100%;display:block;touch-action:none}#bottom{display:flex;align-items:center;gap:7px;padding:6px;background:#080c10;border-top:1px solid #ffffff20;overflow:auto}
-.brand{font-weight:800;font-size:12px;margin:4px 2px 9px}.brand small{display:block;font-weight:400;color:#aaa;font-size:9px;margin-top:2px}
-button{border:1px solid #ffffff25;background:#141b22;color:#fff;border-radius:11px;min-height:40px;padding:7px 10px;font-weight:800;font-size:11px}button.on,button.active{background:#f0c800;color:#111}
-.view{width:100%;margin-bottom:7px;min-height:48px}.panel{background:#111820;border:1px solid #ffffff18;border-radius:13px;padding:8px;margin-bottom:8px}.panel h3{font-size:10px;margin:0 0 7px;color:#ccc}
-.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:5px}.stat{background:#080c10;border-radius:9px;padding:6px;text-align:center}.stat small{display:block;color:#aaa;font-size:8px}.stat b{font-size:18px}.gear{color:#ffd900}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:5px}.geargrid{display:grid;grid-template-columns:repeat(3,1fr);gap:5px}.help{font-size:9px;color:#aaa;line-height:1.4}
-#hud{position:absolute;top:9px;left:9px;right:9px;display:flex;justify-content:space-between;pointer-events:none}#hud>div{background:#0009;border:1px solid #ffffff20;border-radius:12px;padding:7px 10px;font-size:10px}
-#pad{position:absolute;left:16px;bottom:18px;width:116px;height:116px;border:1px solid #ffffff35;background:#0005;border-radius:50%;display:none;touch-action:none}#knob{position:absolute;left:38px;top:38px;width:40px;height:40px;border-radius:50%;background:#f0c800}
-#pedals{position:absolute;right:16px;bottom:18px;display:none;gap:8px}.pedal{width:68px;height:62px}.gas{background:#245c2d}.brake{background:#7a2929}
-#msg{position:absolute;top:18%;left:50%;transform:translateX(-50%);background:#000c;border:1px solid #ffffff25;border-radius:12px;padding:8px 12px;font-size:11px;opacity:0;transition:.2s}#msg.show{opacity:1}
-#rotate{display:none}@media(max-width:900px){#app{grid-template-columns:74px 1fr 174px;grid-template-rows:1fr 52px}.view{font-size:9px}.panel{padding:6px}.stats b{font-size:15px}#pad,#pedals{display:flex}#bottom button{min-width:78px;padding:6px}}
+:root{--panel:rgba(9,12,16,.86);--line:rgba(255,255,255,.16);--accent:#f1c800;--bg:#070a0d}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--bg);color:#fff;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+button{font:inherit}
+#app{position:fixed;inset:0;display:grid;grid-template-columns:90px 1fr 212px;grid-template-rows:1fr 56px}
+#left{grid-row:1/3;background:#0b1016;border-right:1px solid var(--line);padding:10px 7px 7px max(7px,env(safe-area-inset-left));display:flex;flex-direction:column;gap:7px;z-index:20}
+#right{grid-row:1/3;background:#0b1016;border-left:1px solid var(--line);padding:10px max(10px,env(safe-area-inset-right)) 10px 10px;overflow:auto;z-index:20}
+#main{position:relative;overflow:hidden}#bottom{display:flex;align-items:center;gap:7px;padding:6px;background:#0a0e12;border-top:1px solid var(--line);overflow:auto}
+#c{width:100%;height:100%;display:block;touch-action:none}
+.brand{font-weight:900;font-size:12px;padding:4px 3px 9px;border-bottom:1px solid var(--line);margin-bottom:3px}.brand small{display:block;font-weight:400;font-size:9px;color:#aaa;line-height:1.25;margin-top:2px}
+.viewBtn{width:100%;min-height:48px;border:1px solid var(--line);background:#161d25;color:#fff;border-radius:12px;font-size:10px;font-weight:800;padding:5px}.viewBtn.active{background:var(--accent);color:#111}
+.panel{background:#121922;border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:8px;margin-bottom:8px}.panel h3{font-size:10px;color:#d2d2d2;margin:0 0 7px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:5px}.stat{background:#090d11;border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:7px;text-align:center}.stat small{display:block;font-size:8px;color:#aaa}.stat b{font-size:18px}.gear{color:#ffd800}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:5px}.geargrid{display:grid;grid-template-columns:repeat(3,1fr);gap:5px}
+.ctrl,.gearBtn,.bottomBtn{border:1px solid rgba(255,255,255,.18);background:#151c23;color:#fff;border-radius:11px;min-height:40px;padding:7px 9px;font-weight:800;font-size:11px}.ctrl.on,.gearBtn.on,.bottomBtn.on{background:var(--accent);color:#111}
+.help{font-size:9px;color:#a9a9a9;line-height:1.45}
+#hud{position:absolute;left:10px;right:10px;top:max(9px,env(safe-area-inset-top));display:flex;justify-content:space-between;gap:8px;pointer-events:none;z-index:10}#hud .card{background:rgba(0,0,0,.56);border:1px solid rgba(255,255,255,.15);backdrop-filter:blur(7px);border-radius:13px;padding:7px 10px;font-size:10px;line-height:1.45}
+#status{min-width:120px;text-align:right}
+#msg{position:absolute;left:50%;top:18%;transform:translateX(-50%);background:#000d;border:1px solid rgba(255,255,255,.16);border-radius:12px;padding:8px 12px;font-size:11px;opacity:0;transition:.18s;pointer-events:none;z-index:11}#msg.show{opacity:1}
+#pad{position:absolute;left:16px;bottom:18px;width:118px;height:118px;border-radius:50%;background:rgba(0,0,0,.30);border:1px solid rgba(255,255,255,.26);display:none;z-index:12;touch-action:none}#knob{position:absolute;left:39px;top:39px;width:40px;height:40px;border-radius:50%;background:rgba(241,200,0,.95);box-shadow:0 3px 10px rgba(0,0,0,.35)}
+#pedals{position:absolute;right:16px;bottom:18px;display:none;gap:8px;z-index:12}.pedal{width:68px;height:62px;border-radius:14px}.gas{background:#245d2e}.brake{background:#7d2828}
+#rotate{display:none}
+@media(max-width:920px){#app{grid-template-columns:74px 1fr 176px;grid-template-rows:1fr 52px}.viewBtn{min-height:44px;font-size:9px}.panel{padding:6px}.stat b{font-size:15px}#pad,#pedals{display:flex}.bottomBtn{min-width:78px}}
 @media(orientation:portrait) and (max-width:1000px){#rotate{display:flex;position:fixed;inset:0;z-index:999;background:#06080bf5;align-items:center;justify-content:center;text-align:center}}
-</style></head><body>
+</style>
+</head>
+<body>
 <div id="app">
-<aside id="left"><div class="brand">MB 1843AE<small>O500｜3D 駕駛核心</small></div>
-<button class="view active" data-view="orbit">車外</button><button class="view" data-view="front">車頭</button><button class="view" data-view="rear">車尾</button><button class="view" data-view="interior">車內</button><button class="view" data-view="cockpit">駕駛室</button></aside>
-<div id="main"><canvas id="c"></canvas><div id="hud"><div><b>第3階段｜真正3D可駕駛核心版</b><br>先驗收：前進／倒車／轉向／煞車</div><div id="status">引擎 OFF｜手煞車 ON｜N</div></div><div id="msg"></div>
-<div id="pad"><div id="knob"></div></div><div id="pedals"><button id="mBrake" class="pedal brake">煞車</button><button id="mGas" class="pedal gas">油門</button></div></div>
-<aside id="right">
-<div class="panel"><h3>儀表</h3><div class="stats"><div class="stat"><small>km/h</small><b id="speed">0</b></div><div class="stat"><small>rpm</small><b id="rpm">0</b></div><div class="stat"><small>檔位</small><b id="gear" class="gear">N</b></div></div></div>
-<div class="panel"><h3>車輛控制</h3><div class="grid2"><button id="engine">發動</button><button id="park" class="on">手煞車</button><button id="door">前門</button><button id="light">頭燈</button><button id="wiper">雨刷</button><button id="horn">喇叭</button></div></div>
-<div class="panel"><h3>GO240-8</h3><div class="geargrid"><button data-gear="R">R</button><button data-gear="N" class="on">N</button><button data-gear="A">A</button></div><div class="grid2" style="margin-top:5px"><button id="minus">－</button><button id="plus">＋</button></div></div>
-<div class="panel"><h3>操作</h3><div class="help">iPhone：左下圓盤轉向，右下油門／煞車。<br>電腦：WASD 或方向鍵。<br>駕駛／車內視角可拖動畫面看左右。</div></div>
-</aside>
-<div id="bottom"><button id="reset">回道路</button><button id="cam">切視角</button><button id="door2">前門</button><button id="wiper2">雨刷</button><button id="light2">燈光</button></div>
+  <aside id="left">
+    <div class="brand">MB 1843AE<small>O500｜第 3.1 階段<br>3D 駕駛強化版</small></div>
+    <button class="viewBtn active" data-view="orbit">車外</button>
+    <button class="viewBtn" data-view="front">車頭</button>
+    <button class="viewBtn" data-view="rear">車尾</button>
+    <button class="viewBtn" data-view="interior">車內</button>
+    <button class="viewBtn" data-view="cockpit">駕駛室</button>
+  </aside>
+
+  <main id="main">
+    <canvas id="c"></canvas>
+    <div id="hud">
+      <div class="card"><b>3D 可駕駛強化版</b><br>這版繼續補：可駕駛核心、視角、UI、車門、雨刷</div>
+      <div class="card" id="status">引擎 OFF｜手煞車 ON<br>檔位 N</div>
+    </div>
+    <div id="msg"></div>
+    <div id="pad"><div id="knob"></div></div>
+    <div id="pedals">
+      <button id="mBrake" class="pedal brake">煞車</button>
+      <button id="mGas" class="pedal gas">油門</button>
+    </div>
+  </main>
+
+  <aside id="right">
+    <section class="panel">
+      <h3>儀表</h3>
+      <div class="stats">
+        <div class="stat"><small>km/h</small><b id="speed">0</b></div>
+        <div class="stat"><small>rpm</small><b id="rpm">0</b></div>
+        <div class="stat"><small>GEAR</small><b id="gear" class="gear">N</b></div>
+      </div>
+      <div class="help" style="margin-top:6px">氣壓 8.4 bar</div>
+    </section>
+    <section class="panel">
+      <h3>車輛控制</h3>
+      <div class="grid2">
+        <button id="engineBtn" class="ctrl">發動</button>
+        <button id="parkBtn" class="ctrl on">手煞車</button>
+        <button id="doorBtn" class="ctrl">前門</button>
+        <button id="lightBtn" class="ctrl">頭燈</button>
+        <button id="wiperBtn" class="ctrl">雨刷</button>
+        <button id="hornBtn" class="ctrl">喇叭</button>
+      </div>
+    </section>
+    <section class="panel">
+      <h3>GO240-8</h3>
+      <div class="geargrid">
+        <button class="gearBtn" data-gear="R">R</button>
+        <button class="gearBtn on" data-gear="N">N</button>
+        <button class="gearBtn" data-gear="A">A</button>
+      </div>
+      <div class="grid2" style="margin-top:5px">
+        <button id="minusBtn" class="gearBtn">－</button>
+        <button id="plusBtn" class="gearBtn">＋</button>
+      </div>
+      <div class="help" style="margin-top:6px">A 檔可切 A1～A8；移動中不可直接切換 R / A。</div>
+    </section>
+    <section class="panel">
+      <h3>操作說明</h3>
+      <div class="help">iPhone：左下圓盤轉向，右下油門／煞車。<br>電腦：WASD 或方向鍵。<br>在駕駛室／車內視角，可拖動畫面看左右。</div>
+    </section>
+  </aside>
+
+  <footer id="bottom">
+    <button id="resetBtn" class="bottomBtn">回道路</button>
+    <button id="camBtn" class="bottomBtn">切視角</button>
+    <button id="doorBottom" class="bottomBtn">前門</button>
+    <button id="wiperBottom" class="bottomBtn">雨刷</button>
+    <button id="lightBottom" class="bottomBtn">燈光</button>
+  </footer>
 </div>
-<div id="rotate"><div><div style="font-size:50px">↻</div><b>請將手機橫向</b></div></div>
+<div id="rotate"><div><div style="font-size:50px">↻</div><b style="font-size:22px">請將手機橫向</b><div style="font-size:13px;color:#bdbdbd;margin-top:6px">3D 駕駛版橫向比較好操作</div></div></div>
 
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/+esm"}}</script>
 <script type="module">
-import * as THREE from "three";
-const renderer=new THREE.WebGLRenderer({canvas:document.getElementById("c"),antialias:true,powerPreference:"high-performance"});renderer.setPixelRatio(Math.min(devicePixelRatio||1,2));renderer.shadowMap.enabled=true;renderer.outputColorSpace=THREE.SRGBColorSpace;
-const scene=new THREE.Scene();scene.background=new THREE.Color(0xa4cce2);scene.fog=new THREE.Fog(0xa4cce2,80,260);
-const camera=new THREE.PerspectiveCamera(58,1,.05,500);scene.add(new THREE.HemisphereLight(0xffffff,0x5b6958,2.1));const sun=new THREE.DirectionalLight(0xffffff,2.2);sun.position.set(-30,50,-20);scene.add(sun);
-const M={body:new THREE.MeshStandardMaterial({color:0xe0b900,roughness:.48}),dark:new THREE.MeshStandardMaterial({color:0x171b1f}),glass:new THREE.MeshPhysicalMaterial({color:0x7fb1c6,transparent:true,opacity:.56,transmission:.2,roughness:.08}),tyre:new THREE.MeshStandardMaterial({color:0x111}),chrome:new THREE.MeshStandardMaterial({color:0xc6ccd0,metalness:.8,roughness:.25}),seat:new THREE.MeshStandardMaterial({color:0x282e34}),floor:new THREE.MeshStandardMaterial({color:0x44484c}),red:new THREE.MeshStandardMaterial({color:0xb12622}),white:new THREE.MeshStandardMaterial({color:0xfff5c8,emissive:0xffefaa,emissiveIntensity:0})};
-function mesh(g,m,p=scene){const o=new THREE.Mesh(g,m);o.castShadow=o.receiveShadow=true;p.add(o);return o}function box(a,b,c,x,y,z,m,p=scene){const o=mesh(new THREE.BoxGeometry(a,b,c),m,p);o.position.set(x,y,z);return o}function cyl(r,l,x,y,z,m,p=scene){const o=mesh(new THREE.CylinderGeometry(r,r,l,28),m,p);o.rotation.x=Math.PI/2;o.position.set(x,y,z);return o}
-const ground=mesh(new THREE.PlaneGeometry(600,600),new THREE.MeshStandardMaterial({color:0x73836f}));ground.rotation.x=-Math.PI/2;const road=mesh(new THREE.PlaneGeometry(18,520),new THREE.MeshStandardMaterial({color:0x474c50}));road.rotation.x=-Math.PI/2;road.position.z=100;
-for(let z=-150;z<350;z+=12)box(.18,.015,6,0,.01,z,new THREE.MeshStandardMaterial({color:0xf3f0da}));
-for(const x of [-8.3,8.3])box(.18,.018,510,x,.015,100,new THREE.MeshStandardMaterial({color:0xf3f0da}));
-for(let i=0;i<36;i++){const z=-120+i*13;for(const s of [-1,1])box(4+(i%3),3+(i%4),5+(i%5),s*(15+(i%4)*2),1.5,z,new THREE.MeshStandardMaterial({color:0x8b9194}));}
+import * as THREE from 'three';
+const $=id=>document.getElementById(id);
+const renderer=new THREE.WebGLRenderer({canvas:$('c'),antialias:true,powerPreference:'high-performance'});
+renderer.setPixelRatio(Math.min(devicePixelRatio||1,2));renderer.shadowMap.enabled=true;renderer.outputColorSpace=THREE.SRGBColorSpace;
+const scene=new THREE.Scene();scene.background=new THREE.Color(0xa3cae3);scene.fog=new THREE.Fog(0xa3cae3,80,260);
+const camera=new THREE.PerspectiveCamera(58,1,.05,500);
+scene.add(new THREE.HemisphereLight(0xffffff,0x5c6b57,2.1));const sun=new THREE.DirectionalLight(0xffffff,2.3);sun.position.set(-28,52,-20);scene.add(sun);
+const mats={body:new THREE.MeshStandardMaterial({color:0xe0b800,roughness:.48}),body2:new THREE.MeshStandardMaterial({color:0xcaa600,roughness:.55}),dark:new THREE.MeshStandardMaterial({color:0x161b1f,roughness:.55}),glass:new THREE.MeshPhysicalMaterial({color:0x7fb1c6,transparent:true,opacity:.58,transmission:.24,roughness:.08}),tyre:new THREE.MeshStandardMaterial({color:0x111111,roughness:.95}),chrome:new THREE.MeshStandardMaterial({color:0xc7cdd0,metalness:.82,roughness:.25}),seat:new THREE.MeshStandardMaterial({color:0x292f35,roughness:.82}),floor:new THREE.MeshStandardMaterial({color:0x41464a,roughness:.94}),red:new THREE.MeshStandardMaterial({color:0xb12622,emissive:0x590808,emissiveIntensity:.12}),head:new THREE.MeshStandardMaterial({color:0xfff9d7,emissive:0xfff1a5,emissiveIntensity:0})};
+function mesh(g,m,p=scene){const o=new THREE.Mesh(g,m);o.castShadow=true;o.receiveShadow=true;p.add(o);return o}
+function box(w,h,d,x,y,z,m,p=scene){const o=mesh(new THREE.BoxGeometry(w,h,d),m,p);o.position.set(x,y,z);return o}
+function cyl(r,l,x,y,z,m,p=scene){const o=mesh(new THREE.CylinderGeometry(r,r,l,32),m,p);o.rotation.x=Math.PI/2;o.position.set(x,y,z);return o}
+
+// world
+const ground=mesh(new THREE.PlaneGeometry(700,700),new THREE.MeshStandardMaterial({color:0x74866f,roughness:1}));ground.rotation.x=-Math.PI/2;
+const road=mesh(new THREE.PlaneGeometry(18,560),new THREE.MeshStandardMaterial({color:0x4b5054,roughness:1}));road.rotation.x=-Math.PI/2;road.position.z=100;
+for(let z=-160;z<370;z+=12) box(.18,.015,6,0,.01,z,new THREE.MeshStandardMaterial({color:0xf1eed6,roughness:1}));
+for(const x of [-8.2,8.2]) box(.18,.016,560,x,.012,100,new THREE.MeshStandardMaterial({color:0xf7f5eb,roughness:1}));
+for(let i=0;i<28;i++){
+  const z=-130+i*16;
+  for(const side of [-1,1]){
+    const xx=side*(15+(i%4)*1.8);
+    if(i%3===0){
+      const t=mesh(new THREE.CylinderGeometry(.12,.15,1.6,8),new THREE.MeshStandardMaterial({color:0x6d4d36}),scene);t.position.set(xx,.8,z);
+      const crown=mesh(new THREE.SphereGeometry(.95+(i%2)*.25,14,10),new THREE.MeshStandardMaterial({color:0x507451}),scene);crown.position.set(xx,2.0,z);
+    }else{
+      box(3.4+(i%2),3.2+(i%3),4.2+(i%2),xx,1.6,z,new THREE.MeshStandardMaterial({color:0x8a9094,roughness:.95}));
+    }
+  }
+}
+
+// bus
 const bus=new THREE.Group();scene.add(bus);
-box(2.45,3.05,11.9,0,1.76,0,M.body,bus);for(const s of [-1,1])for(let i=0;i<7;i++)box(.035,1.05,1.10,s*1.235,2.42,-4.2+i*1.36,M.glass,bus);
-box(2.08,1.28,.035,0,2.34,-5.97,M.glass,bus);box(1.85,.8,.035,0,2.45,5.97,M.glass,bus);box(2.15,.42,.08,0,1.15,-6.02,M.dark,bus);
-const headlights=[];for(const s of [-1,1]){headlights.push(box(.36,.16,.07,s*.72,.87,-6.08,M.white,bus));box(.22,.48,.07,s*.88,1.05,6.08,M.red,bus)}
-const wheels=[];for(const z of [-3.55,2.65])for(const s of [-1,1]){wheels.push(cyl(.50,.34,s*1.27,.52,z,M.tyre,bus));cyl(.24,.36,s*1.28,.52,z,M.chrome,bus)}
-box(1.86,.12,9.8,0,1.34,.1,M.floor,bus);for(let r=0;r<8;r++)for(const s of [-1,1]){box(.62,.18,.48,s*.66,1.56,-2.7+r*.95,M.seat,bus);box(.62,.72,.16,s*.66,1.94,-2.54+r*.95,M.seat,bus)}
-box(1.8,.5,.52,0,1.78,-5.3,M.dark,bus);const steering=mesh(new THREE.TorusGeometry(.29,.035,10,30),M.dark,bus);steering.rotation.x=Math.PI/2;steering.position.set(.56,1.98,-5.03);
-const doorPivot=new THREE.Group();doorPivot.position.set(-1.245,1.6,-4.75);bus.add(doorPivot);box(.055,1.8,.82,0,0,0,M.body,doorPivot);box(.06,.78,.64,0,.37,0,M.glass,doorPivot);
-const wipers=new THREE.Group();wipers.position.set(0,1.83,-6.03);bus.add(wipers);box(.035,.025,.62,-.4,0,0,M.dark,wipers).rotation.y=.35;box(.035,.025,.62,.4,0,0,M.dark,wipers).rotation.y=-.35;
-const S={engine:false,park:true,gear:"N",manual:1,speed:0,rpm:0,steer:0,throttle:false,brake:false,door:false,light:false,wiper:false,wiperT:0,yaw:0,view:"orbit"};const keys={};
-const $=id=>document.getElementById(id);function msg(t){$("msg").textContent=t;$("msg").classList.add("show");clearTimeout(msg.t);msg.t=setTimeout(()=>$("msg").classList.remove("show"),1100)}
-function audio(){if(!window.ac)window.ac=new (AudioContext||webkitAudioContext)();if(ac.state==="suspended")ac.resume()}function tone(f,d,type="sine",g=.04){audio();const o=ac.createOscillator(),v=ac.createGain();o.type=type;o.frequency.value=f;v.gain.value=g;o.connect(v).connect(ac.destination);o.start();v.gain.exponentialRampToValueAtTime(.0001,ac.currentTime+d);o.stop(ac.currentTime+d)}
-function air(){tone(150,.16,"triangle",.025);setTimeout(()=>tone(86,.28,"sawtooth",.018),70)}function horn(){tone(310,.34,"square",.055);tone(390,.34,"square",.035)}function starter(){tone(82,.18,"sawtooth",.035);setTimeout(()=>tone(118,.3,"sawtooth",.045),120)}
-function ui(){$("speed").textContent=Math.round(Math.abs(S.speed));$("rpm").textContent=Math.round(S.rpm);$("gear").textContent=S.gear==="A"?"A"+S.manual:S.gear;$("status").textContent=`引擎 ${S.engine?"ON":"OFF"}｜手煞車 ${S.park?"ON":"OFF"}｜${$("gear").textContent}`;$("engine").classList.toggle("on",S.engine);$("park").classList.toggle("on",S.park);$("door").classList.toggle("on",S.door);$("light").classList.toggle("on",S.light);$("wiper").classList.toggle("on",S.wiper);$("door2").classList.toggle("on",S.door);$("light2").classList.toggle("on",S.light);$("wiper2").classList.toggle("on",S.wiper);document.querySelectorAll("[data-gear]").forEach(b=>b.classList.toggle("on",b.dataset.gear===S.gear))}
-function engine(){audio();if(!S.engine){if(S.gear!=="N"){msg("請先切到 N 檔");return}starter();S.engine=true;S.rpm=620;msg("引擎已發動")}else{S.engine=false;S.speed=0;S.rpm=0;msg("引擎已熄火")}ui()}function park(){S.park=!S.park;air();ui()}function door(){if(Math.abs(S.speed)>1){msg("移動中不能開門");return}S.door=!S.door;air();ui()}function light(){S.light=!S.light;headlights.forEach(h=>h.material.emissiveIntensity=S.light?2.3:0);ui()}function wiper(){S.wiper=!S.wiper;ui()}
-$("engine").onclick=engine;$("park").onclick=park;$("door").onclick=door;$("light").onclick=light;$("wiper").onclick=wiper;$("horn").onclick=()=>{horn();msg("叭——")};$("door2").onclick=door;$("light2").onclick=light;$("wiper2").onclick=wiper;
-document.querySelectorAll("[data-gear]").forEach(b=>b.onclick=()=>{const g=b.dataset.gear;if(g!=="N"&&!S.engine){msg("請先發動引擎");return}if(Math.abs(S.speed)>1&&g!==S.gear){msg("移動中不能直接切換 R / A");return}S.gear=g;ui()});$("plus").onclick=()=>{if(S.gear==="A"){S.manual=Math.min(8,S.manual+1);ui()}};$("minus").onclick=()=>{if(S.gear==="A"){S.manual=Math.max(1,S.manual-1);ui()}};
-function view(v){S.view=v;document.querySelectorAll(".view").forEach(b=>b.classList.toggle("active",b.dataset.view===v))}document.querySelectorAll(".view").forEach(b=>b.onclick=()=>view(b.dataset.view));const cycle=["orbit","cockpit","front","rear","interior"];$("cam").onclick=()=>view(cycle[(cycle.indexOf(S.view)+1)%cycle.length]);$("reset").onclick=()=>{bus.position.set(0,0,0);S.yaw=0;bus.rotation.y=0;S.speed=0;msg("已回道路")};
-addEventListener("keydown",e=>{keys[e.key.toLowerCase()]=1;if(e.key===" ")e.preventDefault()});addEventListener("keyup",e=>keys[e.key.toLowerCase()]=0);
-function hold(el,key){el.onpointerdown=e=>{e.preventDefault();S[key]=true;audio()};["onpointerup","onpointercancel","onpointerleave"].forEach(n=>el[n]=()=>S[key]=false)}hold($("mGas"),"throttle");hold($("mBrake"),"brake");
-const pad=$("pad"),knob=$("knob");let pid=null;function steer(e){const r=pad.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2;let dx=e.clientX-cx,dy=e.clientY-cy,max=r.width*.31,d=Math.hypot(dx,dy)||1;if(d>max){dx*=max/d;dy*=max/d}knob.style.transform=`translate(${dx}px,${dy}px)`;S.steer=THREE.MathUtils.clamp(dx/max,-1,1)}pad.onpointerdown=e=>{pid=e.pointerId;pad.setPointerCapture(pid);steer(e)};pad.onpointermove=e=>{if(e.pointerId===pid)steer(e)};function rel(e){if(e.pointerId!==pid)return;pid=null;knob.style.transform="translate(0,0)";S.steer=0}pad.onpointerup=rel;pad.onpointercancel=rel;
-let lookY=0,lookP=0,lx=0,ly=0,lpid=null;const cv=$("c");cv.onpointerdown=e=>{lpid=e.pointerId;lx=e.clientX;ly=e.clientY;cv.setPointerCapture(lpid)};cv.onpointermove=e=>{if(e.pointerId!==lpid)return;if(S.view==="cockpit"||S.view==="interior"){lookY-=(e.clientX-lx)*.004;lookP=THREE.MathUtils.clamp(lookP-(e.clientY-ly)*.003,-.35,.35)}lx=e.clientX;ly=e.clientY};cv.onpointerup=e=>{if(e.pointerId===lpid)lpid=null};
-function resize(){const r=$("main").getBoundingClientRect();renderer.setSize(r.width,r.height,false);camera.aspect=r.width/r.height;camera.updateProjectionMatrix()}addEventListener("resize",resize);resize();
-const v1=new THREE.Vector3(),v2=new THREE.Vector3();let last=performance.now();function loop(now){const dt=Math.min(.04,(now-last)/1000);last=now;let st=S.steer;if(keys.a||keys.arrowleft)st=-1;if(keys.d||keys.arrowright)st=1;const gas=S.throttle||keys.w||keys.arrowup,br=S.brake||keys.s||keys.arrowdown||keys[" "];
-if(S.engine){let target=620;if(gas&&!S.park&&S.gear!=="N"){target=1650+Math.abs(S.speed)*4;const dir=S.gear==="R"?-1:1,fac=S.gear==="A"?(1-(S.manual-1)*.045):.7;S.speed+=dir*4.1*fac*dt}else{const d=1.25*dt;if(S.speed>0)S.speed=Math.max(0,S.speed-d);if(S.speed<0)S.speed=Math.min(0,S.speed+d)}if(br){const b=7.8*dt;if(S.speed>0)S.speed=Math.max(0,S.speed-b);if(S.speed<0)S.speed=Math.min(0,S.speed+b)}if(S.park){const b=12*dt;if(S.speed>0)S.speed=Math.max(0,S.speed-b);if(S.speed<0)S.speed=Math.min(0,S.speed+b)}S.speed=S.gear==="R"?Math.max(-18,S.speed):Math.min(105,S.speed);S.rpm+=(target-S.rpm)*Math.min(1,dt*4.8)}else{S.rpm+=(0-S.rpm)*Math.min(1,dt*5);S.speed*=Math.max(0,1-dt*2.2)}
-const ms=S.speed/3.6;if(Math.abs(ms)>.05){S.yaw+=(ms/6)*Math.tan(st*.42)*dt;bus.rotation.y=S.yaw;v1.set(Math.sin(S.yaw),0,-Math.cos(S.yaw));bus.position.addScaledVector(v1,ms*dt)}const ws=(ms/.5)*dt;wheels.forEach(w=>w.rotation.z-=ws);doorPivot.rotation.y+=((S.door?-1.25:0)-doorPivot.rotation.y)*Math.min(1,dt*5.5);if(S.wiper){S.wiperT+=dt*4.2;wipers.rotation.z=Math.sin(S.wiperT)*.48}else wipers.rotation.z*=Math.max(0,1-dt*5);
-const f=v1.set(Math.sin(S.yaw),0,-Math.cos(S.yaw)),r=v2.set(Math.cos(S.yaw),0,Math.sin(S.yaw));if(S.view==="orbit"){v1.copy(bus.position).addScaledVector(f,-9.2).addScaledVector(r,7.2);v1.y=4.7;camera.position.lerp(v1,1-Math.pow(.0001,dt));v2.copy(bus.position);v2.y=1.7;camera.lookAt(v2)}else if(S.view==="front"){v1.copy(bus.position).addScaledVector(f,8);v1.y=3.2;camera.position.lerp(v1,1-Math.pow(.0001,dt));v2.copy(bus.position);v2.y=1.8;camera.lookAt(v2)}else if(S.view==="rear"){v1.copy(bus.position).addScaledVector(f,-8.2);v1.y=3.2;camera.position.lerp(v1,1-Math.pow(.0001,dt));v2.copy(bus.position);v2.y=1.8;camera.lookAt(v2)}else{const pos=S.view==="cockpit"?new THREE.Vector3(.58,2.05,-4.53):new THREE.Vector3(0,2.1,1.6);pos.applyAxisAngle(new THREE.Vector3(0,1,0),S.yaw).add(bus.position);camera.position.copy(pos);const dir=new THREE.Vector3(Math.sin(S.yaw+lookY),Math.sin(lookP),-Math.cos(S.yaw+lookY)).normalize();camera.lookAt(camera.position.clone().add(dir.multiplyScalar(10)))}ui();renderer.render(scene,camera);requestAnimationFrame(loop)}ui();requestAnimationFrame(loop);
-</script></body></html>
+box(2.48,3.06,11.95,0,1.77,0,mats.body,bus);
+box(2.34,.40,11.20,0,.66,0,mats.body2,bus);
+box(2.12,.40,.10,0,1.12,-6.0,mats.dark,bus); // front mask
+box(2.00,.60,.10,0,1.30,6.0,mats.dark,bus); // rear mask
+for(const side of [-1,1]){
+  for(let i=0;i<7;i++) box(.04,1.05,1.1,side*1.24,2.42,-4.20+i*1.36,mats.glass,bus);
+}
+box(2.06,1.26,.04,0,2.32,-5.98,mats.glass,bus); // windshield
+box(1.84,.82,.04,0,2.46,5.98,mats.glass,bus);
+// mirrors
+for(const side of [-1,1]){box(.12,.36,.18,side*1.47,2.43,-5.16,mats.dark,bus);box(.34,.035,.035,side*1.33,2.55,-5.20,mats.dark,bus);}
+// lights
+const headlights=[];for(const side of [-1,1]){headlights.push(box(.34,.15,.08,side*.72,.88,-6.08,mats.head,bus));box(.18,.10,.08,side*.71,.72,-6.09,new THREE.MeshStandardMaterial({color:0xf2a327}),bus);box(.22,.48,.08,side*.88,1.06,6.08,mats.red,bus);} 
+// wheels
+const wheels=[];for(const z of [-3.55,2.65]) for(const side of [-1,1]){wheels.push(cyl(.50,.34,side*1.27,.52,z,mats.tyre,bus));cyl(.24,.36,side*1.28,.52,z,mats.chrome,bus);} 
+// interior
+box(1.88,.12,9.9,0,1.35,.15,mats.floor,bus);for(let r=0;r<8;r++) for(const side of [-1,1]){box(.62,.18,.48,side*.66,1.56,-2.75+r*.95,mats.seat,bus);box(.62,.72,.16,side*.66,1.94,-2.60+r*.95,mats.seat,bus);} 
+// cockpit left drive
+box(1.80,.48,.54,0,1.79,-5.32,mats.dark,bus);box(.68,.30,.20,.54,2.08,-5.56,mats.dark,bus);const steering=mesh(new THREE.TorusGeometry(.29,.035,10,32),mats.dark,bus);steering.rotation.x=Math.PI/2;steering.position.set(.56,1.99,-5.02);box(.05,.05,.30,.56,1.88,-5.10,mats.dark,bus);box(.58,.18,.54,.62,1.56,-4.40,mats.seat,bus);box(.58,.72,.17,.62,1.93,-4.20,mats.seat,bus);
+// door
+const doorPivot=new THREE.Group();doorPivot.position.set(-1.245,1.60,-4.75);bus.add(doorPivot);box(.055,1.80,.84,0,0,0,mats.body,doorPivot);box(.060,.78,.66,0,.37,0,mats.glass,doorPivot);
+// wipers
+const wipers=new THREE.Group();wipers.position.set(0,1.83,-6.03);bus.add(wipers);box(.035,.025,.62,-.40,0,0,mats.dark,wipers).rotation.y=.35;box(.035,.025,.62,.40,0,0,mats.dark,wipers).rotation.y=-.35;
+
+const state={engine:false,park:true,gear:'N',manual:1,speed:0,rpm:0,steer:0,throttle:false,brake:false,door:false,light:false,wiper:false,wiperT:0,yaw:0,view:'orbit'};
+const keys={}; let audioCtx=null;
+function say(t){$('msg').textContent=t;$('msg').classList.add('show');clearTimeout(say.t);say.t=setTimeout(()=>$('msg').classList.remove('show'),1100)}
+function ensureAudio(){if(!audioCtx) audioCtx=new (window.AudioContext||window.webkitAudioContext)(); if(audioCtx.state==='suspended') audioCtx.resume();}
+function beep(freq,dur,type='sine',gain=.04){ensureAudio(); const o=audioCtx.createOscillator(), g=audioCtx.createGain(); o.type=type; o.frequency.value=freq; g.gain.value=gain; o.connect(g).connect(audioCtx.destination); o.start(); g.gain.exponentialRampToValueAtTime(.0001,audioCtx.currentTime+dur); o.stop(audioCtx.currentTime+dur);} 
+function air(){beep(150,.16,'triangle',.025); setTimeout(()=>beep(86,.28,'sawtooth',.018),70)}
+function horn(){beep(310,.34,'square',.055); beep(390,.34,'square',.035)}
+function starter(){beep(82,.18,'sawtooth',.035); setTimeout(()=>beep(118,.30,'sawtooth',.045),120)}
+function updateUI(){
+  $('speed').textContent=Math.round(Math.abs(state.speed)); $('rpm').textContent=Math.round(state.rpm); $('gear').textContent=state.gear==='A' ? 'A'+state.manual : state.gear; $('status').innerHTML=`引擎 ${state.engine?'ON':'OFF'}｜手煞車 ${state.park?'ON':'OFF'}<br>檔位 ${$('gear').textContent}`;
+  [['engineBtn',state.engine],['parkBtn',state.park],['doorBtn',state.door],['lightBtn',state.light],['wiperBtn',state.wiper],['doorBottom',state.door],['lightBottom',state.light],['wiperBottom',state.wiper]].forEach(([id,on])=>$ (id).classList.toggle('on',!!on));
+  $('engineBtn').textContent=state.engine?'熄火':'發動';
+  document.querySelectorAll('[data-gear]').forEach(b=>b.classList.toggle('on',b.dataset.gear===state.gear));
+}
+function toggleEngine(){ensureAudio(); if(!state.engine){if(state.gear!=='N'){say('請先切到 N 檔'); return;} starter(); state.engine=true; state.rpm=620; say('引擎已發動');} else {state.engine=false; state.speed=0; state.rpm=0; say('引擎已熄火');} updateUI();}
+function togglePark(){state.park=!state.park; air(); updateUI();}
+function toggleDoor(){if(Math.abs(state.speed)>1){say('車輛移動中不能開門'); return;} state.door=!state.door; air(); updateUI();}
+function toggleLight(){state.light=!state.light; headlights.forEach(h=>h.material.emissiveIntensity=state.light?2.3:0); updateUI();}
+function toggleWiper(){state.wiper=!state.wiper; updateUI();}
+$('engineBtn').onclick=toggleEngine; $('parkBtn').onclick=togglePark; $('doorBtn').onclick=toggleDoor; $('lightBtn').onclick=toggleLight; $('wiperBtn').onclick=toggleWiper; $('hornBtn').onclick=()=>{horn(); say('叭——')}; $('doorBottom').onclick=toggleDoor; $('lightBottom').onclick=toggleLight; $('wiperBottom').onclick=toggleWiper;
+document.querySelectorAll('[data-gear]').forEach(b=>b.onclick=()=>{const g=b.dataset.gear; if(g!=='N'&&!state.engine){say('請先發動引擎'); return;} if(Math.abs(state.speed)>1&&g!==state.gear){say('移動中不能直接切換 R / A'); return;} state.gear=g; updateUI();});
+$('plusBtn').onclick=()=>{if(state.gear==='A'){state.manual=Math.min(8,state.manual+1); updateUI();}}; $('minusBtn').onclick=()=>{if(state.gear==='A'){state.manual=Math.max(1,state.manual-1); updateUI();}};
+function setView(v){state.view=v; document.querySelectorAll('.viewBtn').forEach(b=>b.classList.toggle('active',b.dataset.view===v));}
+document.querySelectorAll('.viewBtn').forEach(b=>b.onclick=()=>setView(b.dataset.view)); const cycle=['orbit','cockpit','front','rear','interior']; $('camBtn').onclick=()=>setView(cycle[(cycle.indexOf(state.view)+1)%cycle.length]);
+$('resetBtn').onclick=()=>{bus.position.set(0,0,0); state.speed=0; state.yaw=0; bus.rotation.y=0; say('已回到道路');};
+addEventListener('keydown',e=>{keys[e.key.toLowerCase()]=1; if(e.key===' ') e.preventDefault();}); addEventListener('keyup',e=>{keys[e.key.toLowerCase()]=0;});
+function hold(el,key){const on=e=>{e.preventDefault(); state[key]=true; ensureAudio();}; const off=e=>{e.preventDefault(); state[key]=false;}; el.addEventListener('pointerdown',on); ['pointerup','pointerleave','pointercancel'].forEach(n=>el.addEventListener(n,off));}
+hold($('mGas'),'throttle'); hold($('mBrake'),'brake');
+const pad=$('pad'), knob=$('knob'); let steerId=null; function moveSteer(e){const r=pad.getBoundingClientRect(), cx=r.left+r.width/2, cy=r.top+r.height/2; let dx=e.clientX-cx, dy=e.clientY-cy; const max=r.width*.31; const d=Math.hypot(dx,dy)||1; if(d>max){dx*=max/d; dy*=max/d;} knob.style.transform=`translate(${dx}px,${dy}px)`; state.steer=THREE.MathUtils.clamp(dx/max,-1,1);} pad.addEventListener('pointerdown',e=>{steerId=e.pointerId; pad.setPointerCapture(steerId); moveSteer(e)}); pad.addEventListener('pointermove',e=>{if(e.pointerId===steerId) moveSteer(e)}); function releaseSteer(e){if(e.pointerId!==steerId) return; steerId=null; knob.style.transform='translate(0,0)';} pad.addEventListener('pointerup',releaseSteer); pad.addEventListener('pointercancel',releaseSteer);
+let lookYaw=0, lookPitch=0, lookId=null, lx=0, ly=0; $('c').addEventListener('pointerdown',e=>{lookId=e.pointerId; lx=e.clientX; ly=e.clientY; $('c').setPointerCapture(lookId)}); $('c').addEventListener('pointermove',e=>{if(e.pointerId!==lookId) return; if(state.view==='cockpit'||state.view==='interior'){lookYaw-=(e.clientX-lx)*.004; lookPitch=THREE.MathUtils.clamp(lookPitch-(e.clientY-ly)*.003,-.35,.35);} lx=e.clientX; ly=e.clientY;}); $('c').addEventListener('pointerup',e=>{if(e.pointerId===lookId) lookId=null}); $('c').addEventListener('pointercancel',e=>{if(e.pointerId===lookId) lookId=null});
+function resize(){const r=$('main').getBoundingClientRect(); renderer.setSize(r.width,r.height,false); camera.aspect=r.width/r.height; camera.updateProjectionMatrix();} addEventListener('resize',resize); resize();
+const v1=new THREE.Vector3(), v2=new THREE.Vector3(), UP=new THREE.Vector3(0,1,0); let last=performance.now();
+function loop(now){const dt=Math.min(.04,(now-last)/1000); last=now; let steerInput=state.steer; if(keys['a']||keys['arrowleft']) steerInput=-1; if(keys['d']||keys['arrowright']) steerInput=1; if(!steerId && !(keys['a']||keys['arrowleft']||keys['d']||keys['arrowright'])){state.steer*=Math.max(0,1-dt*4.5); knob.style.transform=`translate(${state.steer*36}px,0px)`; steerInput=state.steer;} const gas=state.throttle||keys['w']||keys['arrowup']; const brake=state.brake||keys['s']||keys['arrowdown']||keys[' '];
+  if(state.engine){ let target=620; if(gas && !state.park && state.gear!=='N'){target=1650+Math.abs(state.speed)*4; const dir=state.gear==='R'?-1:1; const fac=state.gear==='A'?(1-(state.manual-1)*.045):.7; state.speed += dir*4.3*fac*dt;} else {const drag=1.25*dt; if(state.speed>0) state.speed=Math.max(0,state.speed-drag); if(state.speed<0) state.speed=Math.min(0,state.speed+drag);} if(brake){const b=8.0*dt; if(state.speed>0) state.speed=Math.max(0,state.speed-b); if(state.speed<0) state.speed=Math.min(0,state.speed+b);} if(state.park){const b=12*dt; if(state.speed>0) state.speed=Math.max(0,state.speed-b); if(state.speed<0) state.speed=Math.min(0,state.speed+b);} state.speed=state.gear==='R'?Math.max(-20,state.speed):Math.min(110,state.speed); state.rpm += (target-state.rpm)*Math.min(1,dt*4.8);} else {state.rpm += (0-state.rpm)*Math.min(1,dt*5.2); state.speed *= Math.max(0,1-dt*2.3);} const ms=state.speed/3.6; if(Math.abs(ms)>.04){ state.yaw += (ms/6.2)*Math.tan(steerInput*.42)*dt; bus.rotation.y=state.yaw; v1.set(Math.sin(state.yaw),0,-Math.cos(state.yaw)); bus.position.addScaledVector(v1,ms*dt);} const spin=(ms/.50)*dt; wheels.forEach(w=>w.rotation.z-=spin); doorPivot.rotation.y += ((state.door?-1.25:0)-doorPivot.rotation.y)*Math.min(1,dt*5.2); if(state.wiper){state.wiperT += dt*4.2; wipers.rotation.z=Math.sin(state.wiperT)*.48;} else {wipers.rotation.z*=Math.max(0,1-dt*5);} 
+  const f=v1.set(Math.sin(state.yaw),0,-Math.cos(state.yaw)); const r=v2.set(Math.cos(state.yaw),0,Math.sin(state.yaw)); if(state.view==='orbit'){const p=new THREE.Vector3().copy(bus.position).addScaledVector(f,-9.0).addScaledVector(r,7.1); p.y=4.6; camera.position.lerp(p,1-Math.pow(.0001,dt)); const t=new THREE.Vector3().copy(bus.position); t.y=1.7; camera.lookAt(t);} else if(state.view==='front'){const p=new THREE.Vector3().copy(bus.position).addScaledVector(f,8.0); p.y=3.2; camera.position.lerp(p,1-Math.pow(.0001,dt)); const t=new THREE.Vector3().copy(bus.position); t.y=1.85; camera.lookAt(t);} else if(state.view==='rear'){const p=new THREE.Vector3().copy(bus.position).addScaledVector(f,-8.2); p.y=3.1; camera.position.lerp(p,1-Math.pow(.0001,dt)); const t=new THREE.Vector3().copy(bus.position); t.y=1.85; camera.lookAt(t);} else if(state.view==='cockpit'){const p=new THREE.Vector3(.58,2.03,-4.58).applyAxisAngle(UP,state.yaw).add(bus.position); camera.position.copy(p); const d=new THREE.Vector3(Math.sin(state.yaw+lookYaw),Math.sin(lookPitch),-Math.cos(state.yaw+lookYaw)).normalize(); camera.lookAt(new THREE.Vector3().copy(camera.position).addScaledVector(d,12));} else if(state.view==='interior'){const p=new THREE.Vector3(0,2.10,1.6).applyAxisAngle(UP,state.yaw).add(bus.position); camera.position.copy(p); const d=new THREE.Vector3(Math.sin(state.yaw+lookYaw),Math.sin(lookPitch),-Math.cos(state.yaw+lookYaw)).normalize(); camera.lookAt(new THREE.Vector3().copy(camera.position).addScaledVector(d,12));}
+  updateUI(); renderer.render(scene,camera); requestAnimationFrame(loop);
+}
+updateUI(); requestAnimationFrame(loop);
+</script>
+</body>
+</html>
